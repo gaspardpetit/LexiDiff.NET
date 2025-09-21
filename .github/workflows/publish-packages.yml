@@ -1,0 +1,47 @@
+﻿name: Publish NuGet Packages
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  pack-and-publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            8.0.x
+          include-prerelease: true
+
+      - name: Restore
+        run: dotnet restore LexiDiff.sln
+
+      - name: Clean package output
+        run: |
+          if (Test-Path 'artifacts\packages') {
+            Remove-Item 'artifacts\packages' -Recurse -Force
+          }
+
+      - name: Pack
+        run: dotnet pack LexiDiff.sln --configuration Release --no-restore
+
+      - name: Push packages to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if (-not $env:NUGET_API_KEY) {
+            throw 'NUGET_API_KEY secret is not set.'
+          }
+          dotnet nuget push "artifacts\packages\*.nupkg" --source https://api.nuget.org/v3/index.json --api-key $env:NUGET_API_KEY --skip-duplicate
