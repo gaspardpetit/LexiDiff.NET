@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using LexiDiff.Tokens;
 
 namespace LexiDiff;
 
@@ -61,7 +62,7 @@ public sealed class LexDiffOptions
 	public CultureInfo SentenceCulture { get; set; } = CultureInfo.InvariantCulture;
 
 	/// Optional custom tokenizer. If null, uses StemmingTokenizer.TokenizeWithStems.
-	public Func<string, IReadOnlyList<SubToken>>? Tokenizer { get; set; }
+	public Func<string, IReadOnlyList<Token>>? Tokenizer { get; set; }
 }
 
 public static class LexDiffer
@@ -76,8 +77,12 @@ public static class LexDiffer
 		options ??= new LexDiffOptions();
 
 		// Tokenizer selection
-		Func<string, IReadOnlyList<SubToken>> tokenizer =
-			options.Tokenizer ?? (s => StemmingTokenizer.TokenizeWithStems(s, options.DetectLang));
+		Func<string, IReadOnlyList<Token>>? tokenizer = options.Tokenizer;
+		if (tokenizer == null)
+		{
+			var stemmingTokenizer = new StemmingTokenizer(options.DetectLang);
+			tokenizer = s => stemmingTokenizer.Tokenize(s);
+		}
 
 		// Fine-grained diff (respects subtokens)
 		var fine = DiffWithTokenizer.Diff(a, b, tokenizer);
@@ -117,3 +122,4 @@ public static class LexDiffer
 		}
 	}
 }
+

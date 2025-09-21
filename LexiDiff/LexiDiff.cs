@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
+using LexiDiff.Tokens;
 
 namespace LexiDiff;
 
@@ -50,13 +52,18 @@ public enum LexGranularity { Tokens, Sentence, Paragraph }
 public static class LexDiff
 {
 	// The 90% use-case: token-aware diff with optional promotion
-	public static LexDiffResult Compare(string a, string b, LexOptions? options = null)
+	public static LexDiffResult Compare(string a, string b, LexOptions? options = null, Func<string, IReadOnlyList<Token>>? tokenizer = null)
 	{
 		options ??= new LexOptions();
 		var detect = options.DetectLang ?? (_ => CultureInfo.GetCultureInfo("en-US"));
 
 		// 1) token-aware diff
-		var fine = DiffWithTokenizer.Diff(a, b, s => StemmingTokenizer.TokenizeWithStems(s, detect));
+		if (tokenizer == null)
+		{
+			StemmingTokenizer stemmingTokenizer = new StemmingTokenizer(detect);
+			tokenizer = s => stemmingTokenizer.Tokenize(s);
+		}
+		var fine = DiffWithTokenizer.Diff(a, b, tokenizer);
 
 		// 2) optional promotion
 		List<DiffSpan> chosen = options.PromoteTo switch {
@@ -116,3 +123,4 @@ internal static class LexRender
 		return sb.ToString();
 	}
 }
+

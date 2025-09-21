@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Xunit;
 using LexiDiff;
+using LexiDiff.Tokens;
 
 namespace LexDiff.Tests;
 
@@ -31,7 +32,7 @@ public class DiffWithTokenizerTests
 		// Also ensure each span’s subtokens concatenate to its text (no partial token splits)
 		foreach (var span in diffs)
 		{
-			var joined = string.Concat(span.Subtokens.OrderBy(t => t.Start).Select(t => t.Text));
+			var joined = string.Concat(span.Tokens.OrderBy(t => t.Start).Select(t => t.Text));
 			Assert.Equal(span.Text, joined);
 		}
 	}
@@ -52,8 +53,8 @@ public class DiffWithTokenizerTests
 		Assert.Equal(b, reconB);
 
 		// Tokenize both sides
-		var toksA = StemmingTokenizer.TokenizeWithStems(a, En);
-		var toksB = StemmingTokenizer.TokenizeWithStems(b, En);
+		var toksA = new StemmingTokenizer(En).Tokenize(a);
+		var toksB = new StemmingTokenizer(En).Tokenize(b);
 
 		// First-word groups by absolute span (don’t rely on token order)
 		var aWord = "Running";
@@ -68,10 +69,10 @@ public class DiffWithTokenizerTests
 						  .OrderBy(t => t.Start).ToList();
 
 		// Snowball splits “Running” -> Stem+Suffix; “Runner” may or may not split
-		var stemA = groupA.FirstOrDefault(t => t.Kind == SubTokenKind.Stem);
+		var stemA = groupA.FirstOrDefault(t => t.Role == TokenRole.Stem);
 		Assert.NotNull(stemA);
 
-		var stemB = groupB.FirstOrDefault(t => t.Kind == SubTokenKind.Stem);
+		var stemB = groupB.FirstOrDefault(t => t.Role == TokenRole.Stem);
 		// Stem preserved: either exact stem token, or B’s word starts with A’s stem text
 		if (stemB is not null)
 			Assert.Equal(stemA!.Text, stemB.Text);
@@ -81,7 +82,7 @@ public class DiffWithTokenizerTests
 		// There must be at least one non-equal span overlapping the first word (on either side)
 		bool changedWord = diffs.Any(d =>
 			d.Operation != Op.Equal &&
-			d.Subtokens.Any(st =>
+			d.Tokens.Any(st =>
 				(st.Start >= aStart && st.Start < aStart + aWord.Length) ||
 				(st.Start >= bStart && st.Start < bStart + bWord.Length)));
 		Assert.True(changedWord);
@@ -89,7 +90,7 @@ public class DiffWithTokenizerTests
 		// No mid-subtoken splits anywhere
 		foreach (var span in diffs)
 		{
-			var joined = string.Concat(span.Subtokens.OrderBy(t => t.Start).Select(t => t.Text));
+			var joined = string.Concat(span.Tokens.OrderBy(t => t.Start).Select(t => t.Text));
 			Assert.Equal(span.Text, joined);
 		}
 	}
@@ -114,8 +115,8 @@ public class DiffWithTokenizerTests
 		var ins = diffs.FirstOrDefault(d => d.Operation == Op.Insert);
 		Assert.NotNull(del);
 		Assert.NotNull(ins);
-		Assert.All(del!.Subtokens, st => Assert.Equal(SubTokenKind.Suffix, st.Kind));
-		Assert.All(ins!.Subtokens, st => Assert.Equal(SubTokenKind.Suffix, st.Kind));
+		Assert.All(del!.Tokens, st => Assert.Equal(TokenRole.Suffix, st.Role));
+		Assert.All(ins!.Tokens, st => Assert.Equal(TokenRole.Suffix, st.Role));
 
 		// Typical case: delete "ées", insert "é" (don’t overfit to exact strings)
 		Assert.True(del.Text.Length >= 1);
@@ -124,8 +125,11 @@ public class DiffWithTokenizerTests
 		// Each span’s text equals concat of its subtokens (no mid-subtoken splits)
 		foreach (var span in diffs)
 		{
-			var joined = string.Concat(span.Subtokens.Select(t => t.Text));
+			var joined = string.Concat(span.Tokens.Select(t => t.Text));
 			Assert.Equal(span.Text, joined);
 		}
 	}
 }
+
+
+
