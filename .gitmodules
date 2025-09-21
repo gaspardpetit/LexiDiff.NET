@@ -1,0 +1,3 @@
+[submodule "ext/snowball"]
+	path = ext/snowball
+	url = https://github.com/snowballstem/snowball.git
