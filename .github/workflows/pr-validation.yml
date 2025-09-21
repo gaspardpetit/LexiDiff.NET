@@ -12,11 +12,19 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Build Snowball sources
+        run: |
+          cd ext/snowball
+          make dist_libstemmer_csharp
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
