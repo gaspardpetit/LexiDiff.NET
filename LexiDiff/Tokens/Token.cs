@@ -1,21 +1,54 @@
-﻿namespace LexiDiff.Tokens;
+﻿using System;
+
+namespace LexiDiff.Tokens;
 
 public enum WordKind
 {
-	Word,        // letters / marks / numbers mixed (ICU "word-ish")
-	Number,      // purely numeric token
-	Punctuation, // .,;:!?—… () [] {} etc.
-	Symbol,      // currency, math, emoji, etc.
-	Whitespace,  // spaces/tabs (rarely emitted; we usually skip)
-	Other
+    Word,
+    Number,
+    Punctuation,
+    Symbol,
+    Whitespace,
+    Other
 }
 
-public sealed record Token(
-	string Text,
-	int Start,              // UTF-16 index in original string
-	int Length,
-	WordKind Kind
-)
+public enum TokenRole
 {
-	public override string ToString() => $"{Kind}:{Text}@{Start}+{Length}";
+    Whole,
+    Stem,
+    Suffix
+}
+
+public sealed class Token
+{
+    public Token(int parentIndex, int start, int length, string text, WordKind kind, TokenRole role = TokenRole.Whole)
+    {
+        if (text is null)
+            throw new ArgumentNullException(nameof(text));
+        if (start < 0)
+            throw new ArgumentOutOfRangeException(nameof(start));
+        if (length < 0)
+            throw new ArgumentOutOfRangeException(nameof(length));
+
+        ParentIndex = parentIndex;
+        Start = start;
+        Length = length;
+        Text = text;
+        Kind = kind;
+        Role = role;
+    }
+
+    public int ParentIndex { get; }
+
+    public int Start { get; }
+
+    public int Length { get; }
+
+    public string Text { get; }
+
+    public WordKind Kind { get; }
+
+    public TokenRole Role { get; }
+
+    public override string ToString() => $"{Kind}/{Role}:{Text}@{Start}+{Length} (p={ParentIndex})";
 }

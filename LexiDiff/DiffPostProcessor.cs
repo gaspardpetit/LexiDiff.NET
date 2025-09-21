@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using LexiDiff.Tokens;
 
 namespace LexiDiff;
 public enum DiffGranularity { Sentence, Paragraph }
@@ -28,12 +29,12 @@ public static class DiffPostProcessor
 		// 2) Identify changed token ranges on each side (from the DMP result)
 		var changedRangesA = CoalesceRanges(
 			diffs.Where(d => d.Operation != Op.Equal)
-				 .SelectMany(d => d.Subtokens.Where(st => d.Operation != Op.Insert)) // Deletes & Equals pull from A, but we only want changes
+				 .SelectMany(d => d.Tokens.Where(st => d.Operation != Op.Insert)) // Deletes & Equals pull from A, but we only want changes
 				 .Select(st => (st.Start, st.Length)));
 
 		var changedRangesB = CoalesceRanges(
 			diffs.Where(d => d.Operation != Op.Equal)
-				 .SelectMany(d => d.Subtokens.Where(st => d.Operation != Op.Delete)) // Inserts pull from B
+				 .SelectMany(d => d.Tokens.Where(st => d.Operation != Op.Delete)) // Inserts pull from B
 				 .Select(st => (st.Start, st.Length)));
 
 		// 3) Promote changed ranges to their containing container (sentence/paragraph)
@@ -169,13 +170,13 @@ public static class DiffPostProcessor
 				{
 					var (s, l) = containersA[ia++];
 					var text = a.Substring(s, l);
-					spans.Add(new DiffSpan(Op.Delete, text, Array.Empty<SubToken>()));
+					spans.Add(new DiffSpan(Op.Delete, text, Array.Empty<Token>()));
 				}
 				if (ib < containersB.Count && bChanged)
 				{
 					var (s, l) = containersB[ib++];
 					var text = b.Substring(s, l);
-					spans.Add(new DiffSpan(Op.Insert, text, Array.Empty<SubToken>()));
+					spans.Add(new DiffSpan(Op.Insert, text, Array.Empty<Token>()));
 				}
 			}
 			else
@@ -188,20 +189,20 @@ public static class DiffPostProcessor
 					var tb = b.Substring(sb, lb);
 					// If identical, keep Equal; else treat as replacement block
 					if (string.Equals(ta, tb, StringComparison.Ordinal))
-						spans.Add(new DiffSpan(Op.Equal, ta, Array.Empty<SubToken>()));
+						spans.Add(new DiffSpan(Op.Equal, ta, Array.Empty<Token>()));
 					else
 					{
-						spans.Add(new DiffSpan(Op.Delete, ta, Array.Empty<SubToken>()));
-						spans.Add(new DiffSpan(Op.Insert, tb, Array.Empty<SubToken>()));
+						spans.Add(new DiffSpan(Op.Delete, ta, Array.Empty<Token>()));
+						spans.Add(new DiffSpan(Op.Insert, tb, Array.Empty<Token>()));
 					}
 				}
 				else
 				{
 					// Tail on one side
 					if (ia < containersA.Count)
-					{ var (s, l) = containersA[ia++]; spans.Add(new DiffSpan(Op.Delete, a.Substring(s, l), Array.Empty<SubToken>())); }
+					{ var (s, l) = containersA[ia++]; spans.Add(new DiffSpan(Op.Delete, a.Substring(s, l), Array.Empty<Token>())); }
 					if (ib < containersB.Count)
-					{ var (s, l) = containersB[ib++]; spans.Add(new DiffSpan(Op.Insert, b.Substring(s, l), Array.Empty<SubToken>())); }
+					{ var (s, l) = containersB[ib++]; spans.Add(new DiffSpan(Op.Insert, b.Substring(s, l), Array.Empty<Token>())); }
 				}
 			}
 		}
@@ -215,3 +216,4 @@ public static class DiffPostProcessor
 		return !(e1 <= s2 || e2 <= s1);
 	}
 }
+

@@ -1,8 +1,9 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Xunit;
+using LexiDiff.Tokens;
 
 namespace LexDiff.Tests;
 
@@ -15,7 +16,7 @@ public class StemmingTokenizer_ReconstructionTests
 	public void Reconstructs_Exactly_With_English_Word_And_Punctuation()
 	{
 		var s = "Running, quickly!";
-		var toks = StemmingTokenizer.TokenizeWithStems(s, En);
+		var toks = new StemmingTokenizer(En).Tokenize(s);
 
 		// 1) Whole-string reconstruction (order by Start)
 		var reconstructed = string.Concat(toks.OrderBy(t => t.Start).Select(t => t.Text));
@@ -31,8 +32,8 @@ public class StemmingTokenizer_ReconstructionTests
 		Assert.NotNull(running);
 
 		// Assert the group has both a Stem and a Suffix token
-		Assert.Contains(running, t => t.Kind == SubTokenKind.Stem);
-		Assert.Contains(running, t => t.Kind == SubTokenKind.Suffix);
+		Assert.Contains(running, t => t.Role == TokenRole.Stem);
+		Assert.Contains(running, t => t.Role == TokenRole.Suffix);
 
 		// And the pair reconstructs the original word
 		var pair = running!.OrderBy(t => t.Start).ToList();
@@ -46,25 +47,25 @@ public class StemmingTokenizer_ReconstructionTests
 	[Fact]
 	public void Reconstructs_Exactly_With_French_Accented_Word_And_Trailing_Period()
 	{
-		var s = "Elle a mangÃ©es.";
-		var toks = StemmingTokenizer.TokenizeWithStems(s, Fr);
+		var s = "Elle a mangées.";
+		var toks = new StemmingTokenizer(Fr).Tokenize(s);
 
 		var reconstructed = string.Concat(toks.OrderBy(t => t.Start).Select(t => t.Text));
 		Assert.Equal(s, reconstructed);
 
-		// Find the pair for â€œmangÃ©esâ€: expect â€œmangâ€ + â€œÃ©esâ€
+		// Find the pair for “mangées”: expect “mang” + “ées”
 		// (Order and exact split depend on your splitter; this asserts pair behavior + reconstruction)
-		var group = toks.Where(t => t.Start >= s.IndexOf("mangÃ©es", StringComparison.Ordinal)
-								 && t.Start < s.IndexOf("mangÃ©es", StringComparison.Ordinal) + "mangÃ©es".Length)
+		var group = toks.Where(t => t.Start >= s.IndexOf("mangées", StringComparison.Ordinal)
+								 && t.Start < s.IndexOf("mangées", StringComparison.Ordinal) + "mangées".Length)
 						.GroupBy(t => t.ParentIndex)
-						.FirstOrDefault(g => g.Sum(x => x.Length) == "mangÃ©es".Length);
+						.FirstOrDefault(g => g.Sum(x => x.Length) == "mangées".Length);
 
 		Assert.NotNull(group);
 		var parts = group!.OrderBy(t => t.Start).ToList();
-		Assert.True(parts.Count == 1 || parts.Count == 2, "Expected Whole or Stem+Suffix for 'mangÃ©es'.");
+		Assert.True(parts.Count == 1 || parts.Count == 2, "Expected Whole or Stem+Suffix for 'mangées'.");
 
 		var joined = string.Concat(parts.Select(t => t.Text));
-		Assert.Equal("mangÃ©es", joined);
+		Assert.Equal("mangées", joined);
 
 		AssertContiguousCoverage(s, toks);
 	}
@@ -73,13 +74,13 @@ public class StemmingTokenizer_ReconstructionTests
 	public void NoSplit_For_Short_Or_NonWord_Tokens_Reconstructs()
 	{
 		var s = "AI 123 -- OK.";
-		var toks = StemmingTokenizer.TokenizeWithStems(s, En);
+		var toks = new StemmingTokenizer(En).Tokenize(s);
 
 		var reconstructed = string.Concat(toks.OrderBy(t => t.Start).Select(t => t.Text));
 		Assert.Equal(s, reconstructed);
 
 		// Expect no Suffix tokens at all here (conservative behavior)
-		Assert.DoesNotContain(toks, t => t.Kind == SubTokenKind.Suffix);
+		Assert.DoesNotContain(toks, t => t.Role == TokenRole.Suffix);
 
 		AssertContiguousCoverage(s, toks);
 	}
@@ -87,12 +88,12 @@ public class StemmingTokenizer_ReconstructionTests
 	[Fact]
 	public void Mixed_Text_Reconstructs_And_Pairs_Are_Locally_Consistent()
 	{
-		var s = "Running tests passed, mangÃ©es aussi.";
+		var s = "Running tests passed, mangées aussi.";
 		// Detector: English for ASCII words, French if word contains an accented char
 		CultureInfo Detector(string w) =>
 			w.Any(ch => ch >= 0x80) ? CultureInfo.GetCultureInfo("fr-FR") : CultureInfo.GetCultureInfo("en-US");
 
-		var toks = StemmingTokenizer.TokenizeWithStems(s, Detector);
+		var toks = new StemmingTokenizer(Detector).Tokenize(s);
 		var reconstructed = string.Concat(toks.OrderBy(t => t.Start).Select(t => t.Text));
 		Assert.Equal(s, reconstructed);
 
@@ -114,13 +115,13 @@ public class StemmingTokenizer_ReconstructionTests
 			// if there are two parts, make sure they are Stem + Suffix
 			if (parts.Count == 2)
 			{
-				Assert.Equal(SubTokenKind.Stem, parts[0].Kind);
-				Assert.Equal(SubTokenKind.Suffix, parts[1].Kind);
+				Assert.Equal(TokenRole.Stem, parts[0].Role);
+				Assert.Equal(TokenRole.Suffix, parts[1].Role);
 			}
 			else
 			{
 				Assert.True(parts.Count == 1);
-				Assert.Equal(SubTokenKind.Whole, parts[0].Kind);
+				Assert.Equal(TokenRole.Whole, parts[0].Role);
 			}
 		}
 
@@ -129,7 +130,7 @@ public class StemmingTokenizer_ReconstructionTests
 
 	// ---------- helpers ----------
 
-	private static void AssertContiguousCoverage(string source, IReadOnlyList<SubToken> toks)
+	private static void AssertContiguousCoverage(string source, IReadOnlyList<Token> toks)
 	{
 		// Ensure subtokens cover the string without gaps/overlaps.
 		// Note: ICU may emit tokens that skip positions (e.g., if it doesn't return whitespace);
@@ -155,3 +156,5 @@ public class StemmingTokenizer_ReconstructionTests
 		Assert.Equal(source.Length, pos);
 	}
 }
+
+

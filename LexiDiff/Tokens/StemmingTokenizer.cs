@@ -3,62 +3,65 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-// You already have this:
-public static class StemmingTokenizer
+
+public interface ITokenizer
 {
-	/// <summary>
-	/// Segment with ICU, then split word/number tokens using MultiLangStemSplitter.
-	/// Non-words are passed through as Whole.
-	/// The concatenation of emitted subtokens equals the original text exactly.
-	/// </summary>
-	/// <param name="s">input text</param>
-	/// <param name="detectLang">language detector (word -> CultureInfo)</param>
-	/// <returns>sequence of subtokens (Whole, or Stem+Suffix)</returns>
-	public static IReadOnlyList<SubToken> TokenizeWithStems(string s, Func<string, CultureInfo> detectLang)
-	{
-		if (s == null)
-			throw new ArgumentNullException(nameof(s));
-		if (detectLang == null)
-			throw new ArgumentNullException(nameof(detectLang));
+    IReadOnlyList<Token> Tokenize(string s);
+}
 
-		var seg = new IcuWordSegmenter("und", emitPunctuation: true, normalizeTo: null);
-		var baseTokens = seg.Tokenize(s); // assumes items with .Text, .Kind, .Start, .Length
+public class StemmingTokenizer : ITokenizer
+{
+    private Func<string, CultureInfo> _detectLang;
 
-		var output = new List<SubToken>();
-		int parentIdx = 0;
+    public StemmingTokenizer(Func<string, CultureInfo> detectLang)
+    {
+        _detectLang = detectLang ?? (_ => CultureInfo.GetCultureInfo("en"));
+    }
 
-		foreach (var t in baseTokens)
-		{
-			// Adjust these checks to your token model if names differ:
-			bool isWordLike =
-				string.Equals(t.Kind.ToString(), "Word", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(t.Kind.ToString(), "Number", StringComparison.OrdinalIgnoreCase);
+    public static IReadOnlyList<Token> TokenizeWithStems(string text, Func<string, CultureInfo>? detectLang)
+    {
+        var detector = detectLang ?? (_ => CultureInfo.GetCultureInfo("en"));
+        return new StemmingTokenizer(detector).Tokenize(text);
+    }
 
-			if (!isWordLike)
-			{
-				// Pass-through: perfect reconstruction at token-level
-				output.Add(new SubToken(parentIdx, t.Start, t.Length, t.Text, SubTokenKind.Whole));
-				parentIdx++;
-				continue;
-			}
+    /// <summary>
+    /// Segment with ICU, then split word/number tokens using MultiLangStemSplitter.
+    /// Non-words are passed through as Whole.
+    /// The concatenation of emitted tokens equals the original text exactly.
+    /// </summary>
+    public virtual IReadOnlyList<Token> Tokenize(string s)
+    {
+        if (s == null)
+            throw new ArgumentNullException(nameof(s));
 
-			var (stem, suffix) = MultiLangStemSplitter.Split(t.Text, detectLang);
+        var segmenter = new IcuWordSegmenter("und", emitPunctuation: true, normalizeTo: null);
+        var baseTokens = segmenter.Tokenize(s);
 
-			if (!string.IsNullOrEmpty(suffix) && stem.Length + suffix.Length == t.Text.Length)
-			{
-				// Two subtokens; preserve absolute spans
-				output.Add(new SubToken(parentIdx, t.Start, stem.Length, stem, SubTokenKind.Stem));
-				output.Add(new SubToken(parentIdx, t.Start + stem.Length, suffix.Length, suffix, SubTokenKind.Suffix));
-			}
-			else
-			{
-				// No confident split or conservative fallback: emit whole
-				output.Add(new SubToken(parentIdx, t.Start, t.Length, t.Text, SubTokenKind.Whole));
-			}
+        if (baseTokens.Count == 0)
+            return baseTokens;
 
-			parentIdx++;
-		}
+        var output = new List<Token>(baseTokens.Count * 2);
+        foreach (var t in baseTokens)
+        {
+            bool isWordLike = t.Kind == WordKind.Word || t.Kind == WordKind.Number;
+            if (!isWordLike)
+            {
+                output.Add(t);
+                continue;
+            }
 
-		return output;
-	}
+            var (stem, suffix) = MultiLangStemSplitter.Split(t.Text, _detectLang);
+            if (!string.IsNullOrEmpty(suffix) && stem.Length + suffix.Length == t.Text.Length)
+            {
+                output.Add(new Token(t.ParentIndex, t.Start, stem.Length, stem, t.Kind, TokenRole.Stem));
+                output.Add(new Token(t.ParentIndex, t.Start + stem.Length, suffix.Length, suffix, t.Kind, TokenRole.Suffix));
+            }
+            else
+            {
+                output.Add(new Token(t.ParentIndex, t.Start, t.Length, t.Text, t.Kind, TokenRole.Whole));
+            }
+        }
+
+        return output;
+    }
 }

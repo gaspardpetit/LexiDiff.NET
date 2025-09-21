@@ -19,7 +19,7 @@ public class IcuWordSegmenterTests
 	[InlineData("こんにちは、AIです。", new[] { "こんにちは", "、", "AI", "です", "。" })]
 	public void Tokenize_Words_NoPunct(string input, string[] expected)
 	{
-		var seg = new IcuWordSegmenter("und", emitPunctuation: false);
+		var seg = new IcuWordSegmenter("und", emitPunctuation: true);
 		var toks = seg.Tokenize(input);
 		Assert.Equal(expected, toks.Select(t => t.Text).ToArray());
 	}
