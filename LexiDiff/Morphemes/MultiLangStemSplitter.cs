@@ -1,6 +1,5 @@
 ﻿using Snowball;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 
 // If you use Lucene's Snowball instead, swap the using + factory below accordingly.

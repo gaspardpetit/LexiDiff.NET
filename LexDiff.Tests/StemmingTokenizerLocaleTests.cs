@@ -1,10 +1,8 @@
 using LexiDiff.Tokens;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using Xunit;
 
-namespace LexDiff.Tests;
+namespace LexiDiff.Tests;
 
 public class StemmingTokenizerLocaleTests
 {

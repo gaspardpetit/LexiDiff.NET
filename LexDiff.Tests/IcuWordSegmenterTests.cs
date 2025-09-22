@@ -1,7 +1,7 @@
 ﻿using LexiDiff.Tokens;
 using Xunit;
 
-namespace LexDiff.Tests;
+namespace LexiDiff.Tests;
 
 public class IcuWordSegmenterTests
 {

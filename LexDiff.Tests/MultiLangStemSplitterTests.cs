@@ -1,8 +1,7 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using Xunit;
 
-namespace LexDiff.Tests;
+namespace LexiDiff.Tests;
 
 public class MultiLangStemSplitterTests
 {

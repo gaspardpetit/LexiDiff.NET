@@ -71,7 +71,7 @@ public static class LexPatchFormatter
 		public LineItem(LineKind k, string t) { Kind = k; Text = t; }
 	}
 
-	private static IEnumerable<LineItem> ToLineItems(IReadOnlyList<LexPatch> spans)
+	private static IEnumerable<LineItem> ToLineItems(IReadOnlyList<LexiPatch> spans)
 	{
 		foreach (var span in spans)
 		{

@@ -1,13 +1,9 @@
-﻿using LexiDiff;
-using LexiDiff.DiffMatchPatch;
+﻿using LexiDiff.DiffMatchPatch;
 using LexiDiff.Tokens;
-using System;
 using System.Globalization;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.Arm;
 using System.Text;
 
-namespace LexiDiff;
+namespace LexiDiff.Sample;
 
 
 class Demo
@@ -37,7 +33,7 @@ class Demo
 		return str.ToString();
 	}
 
-	private static object result_to_str(LexDiffResult result)
+	private static object result_to_str(LexiDiffResult result)
 	{
 		StringBuilder str = new StringBuilder();
 		foreach (var span in result.Spans)
@@ -90,7 +86,7 @@ class Demo
 			Console.WriteLine($"< {string.Join("|", tok1.Select(t => t.Text))}");
 			Console.WriteLine($"> {string.Join("|", tok2.Select(t => t.Text))}");
 
-			LexDiffResult result = LexDiff.Compare(v1, v2, null, workTokenizer.Tokenize);
+			LexiDiffResult result = Lexi.Compare(v1, v2, null, workTokenizer.Tokenize);
 			Console.WriteLine($"= {result_to_str(result)}");
 			Console.WriteLine("\nThis is better, but it would be even clearer if we allowed some words to change when the stem is the same, ex. get -> get\u001b[4mting\u001b[24m.\n");
 		}
@@ -104,7 +100,7 @@ class Demo
 			Console.WriteLine($"< {string.Join("|", tok1.Select(t => t.Text))}");
 			Console.WriteLine($"> {string.Join("|", tok2.Select(t => t.Text))}");
 
-			var result = LexDiff.Compare(v1, v2);
+			var result = Lexi.Compare(v1, v2);
 			Console.WriteLine($"= {result_to_str(result)}");
 			S1();
 		}
@@ -112,7 +108,7 @@ class Demo
 
 	public static void S1()
 	{
-		LexDiffResult result = LexDiff.Compare(
+		LexiDiffResult result = Lexi.Compare(
 			"Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do.",
 			"Alice was getting very tired to sit by her sister on the bank, with nothing to do.");
 
@@ -127,4 +123,3 @@ class Demo
 		}
 	}
 }
-

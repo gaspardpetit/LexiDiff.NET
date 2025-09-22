@@ -5,11 +5,11 @@ VisualStudioVersion = 17.14.36408.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LexiDiff", "LexiDiff\LexiDiff.csproj", "{52ED1F31-074A-4F6F-8C79-89DA92E2108F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LexDiff.Tests", "LexDiff.Tests\LexDiff.Tests.csproj", "{DB8446E8-7982-4FDF-ACD2-957D9B9339A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LexiDiff.Tests", "LexDiff.Tests\LexiDiff.Tests.csproj", "{DB8446E8-7982-4FDF-ACD2-957D9B9339A0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Snowball", "Snowball\Snowball.csproj", "{7F483D41-0C02-4F25-BC63-63552645E316}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LexDiff.Sample", "LexDiff.Sample\LexDiff.Sample.csproj", "{DD732FA1-4F25-4A75-99C0-B1621F8D3728}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LexiDiff.Sample", "LexDiff.Sample\LexiDiff.Sample.csproj", "{DD732FA1-4F25-4A75-99C0-B1621F8D3728}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

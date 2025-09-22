@@ -34,7 +34,7 @@ Produce readable diffs that **never split randomly inside words**, optionally **
 using System.Globalization;
 using LexiDiff;
 
-LexDiffResult result = LexDiff.Compare(
+LexiDiffResult result = Lexi.Compare(
     "Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do.",
     "Alice was getting very tired to sit by her sister on the bank, with nothing to do.");
 
@@ -47,7 +47,7 @@ foreach (var span in result.Spans) {
 }
 ```
 
-The `LexDiffResult` result contains a list of operation (delete, insert, equal) which, when applied onto the original string, generates the second:
+The `LexiDiffResult` result contains a list of operation (delete, insert, equal) which, when applied onto the original string, generates the second:
 
 > Alice was <del>beginning to </del>get<ins>ting</ins> very tired <del>of</del><ins>to</ins> sit<del>ting</del> by her sister on the bank, <del>and of having</del><ins>with</ins> nothing to do.
 
@@ -63,7 +63,7 @@ You can “promote” any in-sentence edits to a **whole-sentence** replacement 
 
 ```cs
 // Sentence-level promotion (locale-aware via ICU)
-var sentenceDiff = LexiDiff.LexDiff.Compare(
+var sentenceDiff = Lexi.Compare(
     a, b,
     new LexiDiff.LexOptions {
         PromoteTo = LexiDiff.LexGranularity.Sentence,
