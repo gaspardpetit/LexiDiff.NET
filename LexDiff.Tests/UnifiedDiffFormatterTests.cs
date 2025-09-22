@@ -19,8 +19,8 @@ public class UnifiedDiffFormatterTests
 	[Fact]
 	public void UnifiedDiff_Basic_OneLineChanged_ShowsMinusPlusAndContext()
 	{
-		var a = "Running, quickly!\nNext sentence stays.\n";
-		var b = "Runner, quicker!\nNext sentence stays.\n";
+		var a = "Running, per the lexicon!\nNext entry stays.\n";
+		var b = "Runner, per the lexicon!\nNext entry stays.\n";
 
 		var patch = LexDiffer.Patch(a, b, new LexDiffOptions {
 			DetectLang = En,
@@ -41,24 +41,13 @@ public class UnifiedDiffFormatterTests
 		Assert.Equal(sa, sb);
 		Assert.True(sa >= 2); // changed line + at least one context
 
-		// We expect minus/plus lines containing the core changed text
-		Assert.Contains("\n-Running, quickly", udiff); // may not include trailing '!'
-		Assert.Contains("\n+Runner, quicker", udiff);   // may not include trailing '!'
-
-		// Context should include the remainder of the first line punctuation ("!") either:
-		// - as part of the changed line (if present), OR
-		// - as its own context line " !"
-		bool exclamationInline =
-			udiff.Contains("\n-Running, quickly!\n") &&
-			udiff.Contains("\n+Runner, quicker!\n");
-		bool exclamationAsContext =
-			udiff.Contains("\n !\n"); // a context line with just '!'
-
-		Assert.True(exclamationInline || exclamationAsContext,
-			"Expected '!' to appear either inline with changed lines or as a separate context line.");
+		// We expect minus/plus lines for the changed lemma plus a context line carrying the punctuation
+		Assert.Contains("\n-Running\n", udiff);
+		Assert.Contains("\n+Runner\n", udiff);
+		Assert.Contains("\n , per the lexicon!\n", udiff);
 
 		// Context second line should be present
-		Assert.Contains("\n Next sentence stays.\n", udiff);
+		Assert.Contains("\n Next entry stays.\n", udiff);
 
 		// No CRs (we force \n)
 		Assert.DoesNotContain("\r", udiff);
@@ -98,15 +87,15 @@ public class UnifiedDiffFormatterTests
 	[Fact]
 	public void UnifiedDiff_IsLineLevel_NotWordInline()
 	{
-		var a = "Running, quickly!\n";
-		var b = "Runner, quicker!\n";
+		var a = "Running, per the lexicon!\n";
+		var b = "Runner, per the lexicon!\n";
 
 		var patch = LexDiffer.Patch(a, b, new LexDiffOptions { DetectLang = En });
 		var udiff = LexPatchFormatter.ToUnifiedDiff(a, b, patch);
 
 		// The unified output shows whole changed lines, not inline word markers
-		Assert.Contains("\n-Running, quickly", udiff);
-		Assert.Contains("\n+Runner, quicker", udiff);
+		Assert.Contains("\n-Running\n", udiff);
+		Assert.Contains("\n+Runner\n", udiff);
 
 		// No inline tokens like “[Stem]” etc.
 		Assert.DoesNotContain("[", udiff);

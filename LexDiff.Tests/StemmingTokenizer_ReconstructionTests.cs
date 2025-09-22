@@ -15,7 +15,7 @@ public class StemmingTokenizer_ReconstructionTests
 	[Fact]
 	public void Reconstructs_Exactly_With_English_Word_And_Punctuation()
 	{
-		var s = "Running, quickly!";
+		var s = "Running, per the lexicon!";
 		var toks = new StemmingTokenizer(En).Tokenize(s);
 
 		// 1) Whole-string reconstruction (order by Start)
@@ -47,25 +47,25 @@ public class StemmingTokenizer_ReconstructionTests
 	[Fact]
 	public void Reconstructs_Exactly_With_French_Accented_Word_And_Trailing_Period()
 	{
-		var s = "Elle a mangées.";
+		var s = "Elles sont arrivÃ©es.";
 		var toks = new StemmingTokenizer(Fr).Tokenize(s);
 
 		var reconstructed = string.Concat(toks.OrderBy(t => t.Start).Select(t => t.Text));
 		Assert.Equal(s, reconstructed);
 
-		// Find the pair for “mangées”: expect “mang” + “ées”
+		// Find the pair for â€œmangÃ©esâ€: expect â€œmangâ€ + â€œÃ©esâ€
 		// (Order and exact split depend on your splitter; this asserts pair behavior + reconstruction)
-		var group = toks.Where(t => t.Start >= s.IndexOf("mangées", StringComparison.Ordinal)
-								 && t.Start < s.IndexOf("mangées", StringComparison.Ordinal) + "mangées".Length)
+		var group = toks.Where(t => t.Start >= s.IndexOf("arrivÃ©es", StringComparison.Ordinal)
+								 && t.Start < s.IndexOf("arrivÃ©es", StringComparison.Ordinal) + "arrivÃ©es".Length)
 						.GroupBy(t => t.ParentIndex)
-						.FirstOrDefault(g => g.Sum(x => x.Length) == "mangées".Length);
+						.FirstOrDefault(g => g.Sum(x => x.Length) == "arrivÃ©es".Length);
 
 		Assert.NotNull(group);
 		var parts = group!.OrderBy(t => t.Start).ToList();
-		Assert.True(parts.Count == 1 || parts.Count == 2, "Expected Whole or Stem+Suffix for 'mangées'.");
+		Assert.True(parts.Count == 1 || parts.Count == 2, "Expected Whole or Stem+Suffix for 'arrivÃ©es'.");
 
 		var joined = string.Concat(parts.Select(t => t.Text));
-		Assert.Equal("mangées", joined);
+		Assert.Equal("arrivÃ©es", joined);
 
 		AssertContiguousCoverage(s, toks);
 	}
@@ -73,7 +73,7 @@ public class StemmingTokenizer_ReconstructionTests
 	[Fact]
 	public void NoSplit_For_Short_Or_NonWord_Tokens_Reconstructs()
 	{
-		var s = "AI 123 -- OK.";
+		var s = "ABC 123 -- OK.";
 		var toks = new StemmingTokenizer(En).Tokenize(s);
 
 		var reconstructed = string.Concat(toks.OrderBy(t => t.Start).Select(t => t.Text));
@@ -88,7 +88,7 @@ public class StemmingTokenizer_ReconstructionTests
 	[Fact]
 	public void Mixed_Text_Reconstructs_And_Pairs_Are_Locally_Consistent()
 	{
-		var s = "Running tests passed, mangées aussi.";
+		var s = "Running lexemes passed, arrivÃ©es aussi.";
 		// Detector: English for ASCII words, French if word contains an accented char
 		CultureInfo Detector(string w) =>
 			w.Any(ch => ch >= 0x80) ? CultureInfo.GetCultureInfo("fr-FR") : CultureInfo.GetCultureInfo("en-US");

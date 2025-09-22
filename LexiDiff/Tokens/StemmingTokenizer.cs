@@ -34,7 +34,8 @@ public class StemmingTokenizer : ITokenizer
         if (s == null)
             throw new ArgumentNullException(nameof(s));
 
-        var segmenter = new IcuWordSegmenter("und", emitPunctuation: true, normalizeTo: null);
+		var culture = _detectLang.Invoke(s) ?? CultureInfo.InvariantCulture;
+        var segmenter = CreateSegmenter(culture);
         var baseTokens = segmenter.Tokenize(s);
 
         if (baseTokens.Count == 0)
@@ -63,5 +64,11 @@ public class StemmingTokenizer : ITokenizer
         }
 
         return output;
+    }
+
+    protected virtual IcuWordSegmenter CreateSegmenter(CultureInfo culture)
+    {
+        culture ??= CultureInfo.InvariantCulture;
+        return new IcuWordSegmenter(culture, emitPunctuation: true, normalizeTo: null);
     }
 }

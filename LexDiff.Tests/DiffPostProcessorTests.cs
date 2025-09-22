@@ -23,8 +23,8 @@ public class DiffPostProcessorTests
 	[Fact]
 	public void Promote_Sentence_Replaces_Only_Changed_Sentence()
 	{
-		var a = "Running, quickly! Next sentence stays.";
-		var b = "Runner, quicker! Next sentence stays.";
+		var a = "Running, per the lexicon! Next entry stays.";
+		var b = "Runner, per the lexicon! Next entry stays.";
 
 		var fine = Fine(a, b);
 		var coarse = DiffPostProcessor.Promote(a, b, fine, DiffGranularity.Sentence, CultureInfo.GetCultureInfo("en-US"));
@@ -38,14 +38,14 @@ public class DiffPostProcessorTests
 		Assert.Contains(coarse, d => d.Operation == Op.Insert && d.Text.EndsWith("! ", StringComparison.Ordinal));
 
 		// Second sentence remains Equal without a leading space.
-		Assert.Contains(coarse, d => d.Operation == Op.Equal && d.Text == "Next sentence stays.");
+		Assert.Contains(coarse, d => d.Operation == Op.Equal && d.Text == "Next entry stays.");
 	}
 
 	[Fact]
 	public void Promote_Sentence_Collapses_Multiple_Changes_Into_One_Block()
 	{
-		var a = "We were Running very quickly! The rest is unchanged.";
-		var b = "We were Runner quite quickly! The rest is unchanged.";
+		var a = "We were Running through lexemes very quickly! The remaining entry is unchanged.";
+		var b = "We were Runner through lexemes quite quickly! The remaining entry is unchanged.";
 
 		var fine = Fine(a, b);
 		Assert.True(fine.Count(d => d.Operation != Op.Equal) >= 2); // multiple small changes
@@ -60,7 +60,7 @@ public class DiffPostProcessorTests
 		Assert.Contains(coarse, d => d.Operation == Op.Insert && d.Text.EndsWith("! ", StringComparison.Ordinal));
 
 		// And an Equal second sentence (no leading space)
-		Assert.Contains(coarse, d => d.Operation == Op.Equal && d.Text == "The rest is unchanged.");
+		Assert.Contains(coarse, d => d.Operation == Op.Equal && d.Text == "The remaining entry is unchanged.");
 	}
 
 	[Fact]
@@ -88,3 +88,4 @@ public class DiffPostProcessorTests
 		Assert.Contains(equals, e => e.Text == "Unchanged para.\n");
 	}
 }
+
