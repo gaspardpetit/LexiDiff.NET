@@ -1,3 +1,6 @@
+[![NuGet](https://img.shields.io/nuget/v/LexiDiff.svg)](https://www.nuget.org/packages/LexiDiff)
+
+
 # LexiDiff
 
 Token-aware text diffs with an objective to favour readability over compactness.
