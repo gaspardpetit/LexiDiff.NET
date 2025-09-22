@@ -23,7 +23,7 @@ public sealed class IcuWordSegmenter : ITokenizer
 		NormalizationForm? normalizeTo = null)
     : this(TryGetCulture(locale) ?? CultureInfo.InvariantCulture, emitPunctuation, coalescePunctWithFollowingSpace)
 	{}
-	
+
     public IcuWordSegmenter(
 		CultureInfo? locale = null,
         bool emitPunctuation = true,

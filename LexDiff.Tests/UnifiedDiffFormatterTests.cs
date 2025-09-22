@@ -1,12 +1,9 @@
-﻿using LexDiff;
-using LexiDiff;
-using System;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using Xunit;
 
-namespace LexDiff.Tests;
+namespace LexiDiff.Tests;
+
 public class UnifiedDiffFormatterTests
 {
 	private static readonly Func<string, CultureInfo> En
@@ -22,7 +19,7 @@ public class UnifiedDiffFormatterTests
 		var a = "Running, per the lexicon!\nNext entry stays.\n";
 		var b = "Runner, per the lexicon!\nNext entry stays.\n";
 
-		var patch = LexDiffer.Patch(a, b, new LexDiffOptions {
+		var patch = LexiDiffer.Patch(a, b, new LexiDiffOptions {
 			DetectLang = En,
 			PromoteTo = Granularity.Tokens
 		});
@@ -59,7 +56,7 @@ public class UnifiedDiffFormatterTests
 		var a = "Alpha\n\nGamma\n";
 		var b = "Alpha\nBeta\n\nGamma\n";
 
-		var patch = LexDiffer.Patch(a, b, new LexDiffOptions {
+		var patch = LexiDiffer.Patch(a, b, new LexiDiffOptions {
 			DetectLang = En,
 			PromoteTo = Granularity.Tokens
 		});
@@ -90,7 +87,7 @@ public class UnifiedDiffFormatterTests
 		var a = "Running, per the lexicon!\n";
 		var b = "Runner, per the lexicon!\n";
 
-		var patch = LexDiffer.Patch(a, b, new LexDiffOptions { DetectLang = En });
+		var patch = LexiDiffer.Patch(a, b, new LexiDiffOptions { DetectLang = En });
 		var udiff = LexPatchFormatter.ToUnifiedDiff(a, b, patch);
 
 		// The unified output shows whole changed lines, not inline word markers

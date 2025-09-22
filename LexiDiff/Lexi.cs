@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using LexiDiff.Tokens;
@@ -8,7 +7,7 @@ using LexiDiff.Tokens;
 namespace LexiDiff;
 
 // Core result
-public sealed record LexDiffResult(
+public sealed record LexiDiffResult(
 	IReadOnlyList<LexSpan> Spans
 )
 {
@@ -49,10 +48,10 @@ public sealed record LexOptions
 public enum LexGranularity { Tokens, Sentence, Paragraph }
 
 // Single entry point
-public static class LexDiff
+public static class Lexi
 {
 	// The 90% use-case: token-aware diff with optional promotion
-	public static LexDiffResult Compare(string a, string b, LexOptions? options = null, Func<string, IReadOnlyList<Token>>? tokenizer = null)
+	public static LexiDiffResult Compare(string a, string b, LexOptions? options = null, Func<string, IReadOnlyList<Token>>? tokenizer = null)
 	{
 		options ??= new LexOptions();
 		var detect = options.DetectLang ?? (_ => CultureInfo.GetCultureInfo("en-US"));
@@ -78,29 +77,29 @@ public static class LexDiff
 			d.Text
 		)).ToList();
 
-		return new LexDiffResult(spans);
+		return new LexiDiffResult(spans);
 	}
 
 	// Convenience shorthands
-	public static LexDiffResult CompareSentences(string a, string b, CultureInfo? culture = null)
+	public static LexiDiffResult CompareSentences(string a, string b, CultureInfo? culture = null)
 		=> Compare(a, b, new LexOptions { PromoteTo = LexGranularity.Sentence, SentenceCulture = culture ?? CultureInfo.InvariantCulture });
 
-	public static LexDiffResult CompareParagraphs(string a, string b)
+	public static LexiDiffResult CompareParagraphs(string a, string b)
 		=> Compare(a, b, new LexOptions { PromoteTo = LexGranularity.Paragraph });
 }
 
 // Renderers live in one place (keeps result simple)
 internal static class LexRender
 {
-	public static string UnifiedDiff(LexDiffResult result, string aLabel, string bLabel, int context)
+	public static string UnifiedDiff(LexiDiffResult result, string aLabel, string bLabel, int context)
 		=> LexPatchFormatter.ToUnifiedDiff(result.ReconstructA(), result.ReconstructB(),
 		   // adaptor to existing formatter
-		   new LexPatchSet(result.Spans.Select(s => new LexPatch(
+		   new LexPatchSet(result.Spans.Select(s => new LexiPatch(
 			   s.Op switch { LexOp.Equal => PatchOp.Equal, LexOp.Insert => PatchOp.Insert, LexOp.Delete => PatchOp.Delete, _ => throw new() },
 			   s.Text)).ToList()),
 		   aLabel, bLabel, context);
 
-	public static string InlineHtml(LexDiffResult result)
+	public static string InlineHtml(LexiDiffResult result)
 	{
 		// super-simple default: wrap + in <ins>, - in <del>, = passthrough.
 		// (You already have token/subtoken info internally if you want richer highlighting later.)
@@ -123,4 +122,3 @@ internal static class LexRender
 		return sb.ToString();
 	}
 }
-

@@ -5,6 +5,7 @@ using System.Linq;
 using LexiDiff.Tokens;
 
 namespace LexiDiff;
+
 public enum DiffGranularity { Sentence, Paragraph }
 
 public static class DiffPostProcessor
@@ -216,4 +217,3 @@ public static class DiffPostProcessor
 		return !(e1 <= s2 || e2 <= s1);
 	}
 }
-

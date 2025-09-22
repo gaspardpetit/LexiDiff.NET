@@ -1,12 +1,8 @@
-﻿using System;
-using System.Globalization;
-using System.Linq;
-using System.Collections.Generic;
+﻿using System.Globalization;
 using Xunit;
-using LexiDiff;
 using LexiDiff.Tokens;
 
-namespace LexDiff.Tests;
+namespace LexiDiff.Tests;
 
 public class DiffWithTokenizerTests
 {
@@ -83,8 +79,8 @@ public class DiffWithTokenizerTests
 		bool changedWord = diffs.Any(d =>
 			d.Operation != Op.Equal &&
 			d.Tokens.Any(st =>
-				(st.Start >= aStart && st.Start < aStart + aWord.Length) ||
-				(st.Start >= bStart && st.Start < bStart + bWord.Length)));
+				st.Start >= aStart && st.Start < aStart + aWord.Length ||
+				st.Start >= bStart && st.Start < bStart + bWord.Length));
 		Assert.True(changedWord);
 
 		// No mid-subtoken splits anywhere
@@ -130,6 +126,3 @@ public class DiffWithTokenizerTests
 		}
 	}
 }
-
-
-

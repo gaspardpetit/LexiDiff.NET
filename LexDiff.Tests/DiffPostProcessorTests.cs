@@ -1,11 +1,7 @@
-﻿using System;
-using System.Globalization;
-using System.Linq;
-using System.Collections.Generic;
+﻿using System.Globalization;
 using Xunit;
-using LexiDiff;
 
-namespace LexDiff.Tests;
+namespace LexiDiff.Tests;
 
 public class DiffPostProcessorTests
 {
@@ -88,4 +84,3 @@ public class DiffPostProcessorTests
 		Assert.Contains(equals, e => e.Text == "Unchanged para.\n");
 	}
 }
-

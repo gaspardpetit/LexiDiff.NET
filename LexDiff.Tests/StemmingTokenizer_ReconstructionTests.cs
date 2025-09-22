@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using Xunit;
 using LexiDiff.Tokens;
 
-namespace LexDiff.Tests;
+namespace LexiDiff.Tests;
 
 public class StemmingTokenizer_ReconstructionTests
 {
@@ -156,5 +153,3 @@ public class StemmingTokenizer_ReconstructionTests
 		Assert.Equal(source.Length, pos);
 	}
 }
-
-

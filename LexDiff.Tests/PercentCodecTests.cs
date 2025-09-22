@@ -1,8 +1,7 @@
 ﻿using LexiDiff.DiffMatchPatch;
-using System;
 using Xunit;
 
-namespace LexDiff.Tests;
+namespace LexiDiff.Tests;
 
 public sealed class PercentCodecTests
 {

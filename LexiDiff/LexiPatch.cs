@@ -1,4 +1,4 @@
-﻿// LexDiff API surface
+﻿// LexiDiff API surface
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,12 +9,12 @@ namespace LexiDiff;
 
 public enum PatchOp { Equal, Insert, Delete }
 
-public sealed class LexPatch
+public sealed class LexiPatch
 {
 	public PatchOp Op { get; }
 	public string Text { get; }
 
-	public LexPatch(PatchOp? op, string text)
+	public LexiPatch(PatchOp? op, string text)
 	{
 		Op = op ?? throw new ArgumentNullException(nameof(op));
 		Text = text ?? throw new ArgumentNullException(nameof(text));
@@ -25,9 +25,9 @@ public sealed class LexPatch
 
 public sealed class LexPatchSet
 {
-	public IReadOnlyList<LexPatch> Spans { get; }
+	public IReadOnlyList<LexiPatch> Spans { get; }
 
-	public LexPatchSet(IReadOnlyList<LexPatch> spans)
+	public LexPatchSet(IReadOnlyList<LexiPatch> spans)
 	{
 		Spans = spans ?? throw new ArgumentNullException(nameof(spans));
 	}
@@ -49,7 +49,7 @@ public sealed class LexPatchSet
 
 public enum Granularity { Tokens, Sentence, Paragraph }
 
-public sealed class LexDiffOptions
+public sealed class LexiDiffOptions
 {
 	/// Word→Culture detector (defaults to en-US).
 	public Func<string, CultureInfo> DetectLang { get; set; } =
@@ -65,16 +65,16 @@ public sealed class LexDiffOptions
 	public Func<string, IReadOnlyList<Token>>? Tokenizer { get; set; }
 }
 
-public static class LexDiffer
+public static class LexiDiffer
 {
 	/// Compute a token-aware patch from A→B.
-	public static LexPatchSet Patch(string a, string b, LexDiffOptions? options = null)
+	public static LexPatchSet Patch(string a, string b, LexiDiffOptions? options = null)
 	{
 		if (a == null)
 			throw new ArgumentNullException(nameof(a));
 		if (b == null)
 			throw new ArgumentNullException(nameof(b));
-		options ??= new LexDiffOptions();
+		options ??= new LexiDiffOptions();
 
 		// Tokenizer selection
 		Func<string, IReadOnlyList<Token>>? tokenizer = options.Tokenizer;
@@ -103,7 +103,7 @@ public static class LexDiffer
 		}
 
 		// Convert to public Patch model
-		var patches = chosen.Select(d => new LexPatch(ToPatchOp(d.Operation), d.Text)).ToList();
+		var patches = chosen.Select(d => new LexiPatch(ToPatchOp(d.Operation), d.Text)).ToList();
 		return new LexPatchSet(patches);
 	}
 
@@ -122,4 +122,3 @@ public static class LexDiffer
 		}
 	}
 }
-
