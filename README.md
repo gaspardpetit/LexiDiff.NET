@@ -40,9 +40,9 @@ LexiDiffResult result = Lexi.Compare(
 
 foreach (var span in result.Spans) {
     switch (span.Op) {
-        case LexOp.Insert: Console.Write($"<ins>{span.Text}</ins>"); break;
-        case LexOp.Equal:  Console.Write(span.Text);                 break;
-        case LexOp.Delete: Console.Write($"<del>{span.Text}</del>"); break;
+        case LexiOp.Insert: Console.Write($"<ins>{span.Text}</ins>"); break;
+        case LexiOp.Equal:  Console.Write(span.Text);                 break;
+        case LexiOp.Delete: Console.Write($"<del>{span.Text}</del>"); break;
     }
 }
 ```
@@ -65,7 +65,7 @@ You can “promote” any in-sentence edits to a **whole-sentence** replacement 
 // Sentence-level promotion (locale-aware via ICU)
 var sentenceDiff = Lexi.Compare(
     a, b,
-    new LexiDiff.LexOptions {
+    new LexiDiff.LexiOptions {
         PromoteTo = LexiDiff.LexGranularity.Sentence,
         SentenceCulture = CultureInfo.GetCultureInfo("en-US")
     });

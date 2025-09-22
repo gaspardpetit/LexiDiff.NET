@@ -40,15 +40,15 @@ class Demo
 		{
 			switch (span.Op)
 			{
-				case LexOp.Insert:
+				case LexiOp.Insert:
 					str.Append("\x1b[4m");
 					str.Append(span.Text);
 					str.Append("\x1b[24m");
 					break;
-				case LexOp.Equal:
+				case LexiOp.Equal:
 					str.Append(span.Text);
 					break;
-				case LexOp.Delete:
+				case LexiOp.Delete:
 					str.Append("[");
 					str.Append(span.Text);
 					str.Append("]");
@@ -116,9 +116,9 @@ class Demo
 		{
 			switch (span.Op)
 			{
-				case LexOp.Insert: Console.Write($"<ins>{span.Text}</ins>"); break;
-				case LexOp.Equal: Console.Write(span.Text); break;
-				case LexOp.Delete: Console.Write("<del>"); Console.Write(span.Text); Console.Write("</del>"); break;
+				case LexiOp.Insert: Console.Write($"<ins>{span.Text}</ins>"); break;
+				case LexiOp.Equal: Console.Write(span.Text); break;
+				case LexiOp.Delete: Console.Write("<del>"); Console.Write(span.Text); Console.Write("</del>"); break;
 			}
 		}
 	}
