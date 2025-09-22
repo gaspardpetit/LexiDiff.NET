@@ -12,8 +12,8 @@ public sealed record LexiDiffResult(
 )
 {
 	// A (Equal+Delete) and B (Equal+Insert) reconstructions
-	public string ReconstructA() => string.Concat(Spans.Where(s => s.Op != LexOp.Insert).Select(s => s.Text));
-	public string ReconstructB() => string.Concat(Spans.Where(s => s.Op != LexOp.Delete).Select(s => s.Text));
+	public string ReconstructA() => string.Concat(Spans.Where(s => s.Op != LexiOp.Insert).Select(s => s.Text));
+	public string ReconstructB() => string.Concat(Spans.Where(s => s.Op != LexiOp.Delete).Select(s => s.Text));
 
 	// Apply to A -> B (throws if A mismatch)
 	public string ApplyTo(string sourceA)
@@ -33,11 +33,11 @@ public sealed record LexiDiffResult(
 }
 
 // One span, nothing else
-public sealed record LexSpan(LexOp Op, string Text);
-public enum LexOp { Equal, Insert, Delete }
+public sealed record LexSpan(LexiOp Op, string Text);
+public enum LexiOp { Equal, Insert, Delete }
 
 // Minimal options
-public sealed record LexOptions
+public sealed record LexiOptions
 {
 	// none = token-aware diff
 	public LexGranularity PromoteTo { get; init; } = LexGranularity.Tokens;
@@ -51,9 +51,9 @@ public enum LexGranularity { Tokens, Sentence, Paragraph }
 public static class Lexi
 {
 	// The 90% use-case: token-aware diff with optional promotion
-	public static LexiDiffResult Compare(string a, string b, LexOptions? options = null, Func<string, IReadOnlyList<Token>>? tokenizer = null)
+	public static LexiDiffResult Compare(string a, string b, LexiOptions? options = null, Func<string, IReadOnlyList<Token>>? tokenizer = null)
 	{
-		options ??= new LexOptions();
+		options ??= new LexiOptions();
 		var detect = options.DetectLang ?? (_ => CultureInfo.GetCultureInfo("en-US"));
 
 		// 1) token-aware diff
@@ -73,7 +73,7 @@ public static class Lexi
 
 		// 3) project to lean spans
 		var spans = chosen.Select(d => new LexSpan(
-			d.Operation switch { Op.Equal => LexOp.Equal, Op.Insert => LexOp.Insert, Op.Delete => LexOp.Delete, _ => throw new() },
+			d.Operation switch { Op.Equal => LexiOp.Equal, Op.Insert => LexiOp.Insert, Op.Delete => LexiOp.Delete, _ => throw new() },
 			d.Text
 		)).ToList();
 
@@ -82,10 +82,10 @@ public static class Lexi
 
 	// Convenience shorthands
 	public static LexiDiffResult CompareSentences(string a, string b, CultureInfo? culture = null)
-		=> Compare(a, b, new LexOptions { PromoteTo = LexGranularity.Sentence, SentenceCulture = culture ?? CultureInfo.InvariantCulture });
+		=> Compare(a, b, new LexiOptions { PromoteTo = LexGranularity.Sentence, SentenceCulture = culture ?? CultureInfo.InvariantCulture });
 
 	public static LexiDiffResult CompareParagraphs(string a, string b)
-		=> Compare(a, b, new LexOptions { PromoteTo = LexGranularity.Paragraph });
+		=> Compare(a, b, new LexiOptions { PromoteTo = LexGranularity.Paragraph });
 }
 
 // Renderers live in one place (keeps result simple)
@@ -95,7 +95,7 @@ internal static class LexRender
 		=> LexPatchFormatter.ToUnifiedDiff(result.ReconstructA(), result.ReconstructB(),
 		   // adaptor to existing formatter
 		   new LexPatchSet(result.Spans.Select(s => new LexiPatch(
-			   s.Op switch { LexOp.Equal => PatchOp.Equal, LexOp.Insert => PatchOp.Insert, LexOp.Delete => PatchOp.Delete, _ => throw new() },
+			   s.Op switch { LexiOp.Equal => PatchOp.Equal, LexiOp.Insert => PatchOp.Insert, LexiOp.Delete => PatchOp.Delete, _ => throw new() },
 			   s.Text)).ToList()),
 		   aLabel, bLabel, context);
 
@@ -108,13 +108,13 @@ internal static class LexRender
 		{
 			switch (s.Op)
 			{
-				case LexOp.Equal:
+				case LexiOp.Equal:
 					sb.Append(System.Net.WebUtility.HtmlEncode(s.Text));
 					break;
-				case LexOp.Insert:
+				case LexiOp.Insert:
 					sb.Append("<ins>").Append(System.Net.WebUtility.HtmlEncode(s.Text)).Append("</ins>");
 					break;
-				case LexOp.Delete:
+				case LexiOp.Delete:
 					sb.Append("<del>").Append(System.Net.WebUtility.HtmlEncode(s.Text)).Append("</del>");
 					break;
 			}
