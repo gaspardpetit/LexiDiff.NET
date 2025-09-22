@@ -1,3 +1,4 @@
+[![Build & Tests](https://github.com/gaspardpetit/LexiDiff.NET/actions/workflows/run-tests.yml/badge.svg)](https://github.com/gaspardpetit/LexiDiff.NET/actions/workflows/run-tests.yml)
 [![NuGet](https://img.shields.io/nuget/v/LexiDiff.svg)](https://www.nuget.org/packages/LexiDiff)
 
 
