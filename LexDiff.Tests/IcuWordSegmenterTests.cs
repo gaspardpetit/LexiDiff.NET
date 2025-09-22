@@ -12,11 +12,11 @@ public class IcuWordSegmenterTests
 
 
 	[Theory]
-	[InlineData("Simple English text.", new[] { "Simple", " ", "English", " ", "text", "." })]
-	[InlineData("Bonjour tout le monde!", new[] { "Bonjour", " ", "tout", " ", "le", " ", "monde", "!" })]
-	// ideally เอไอ would be kept together, but we would need to use a complete thai dictionnary
-	[InlineData("ฉันชื่อเอไอ", new[] { "ฉัน", "ชื่อ", "เอ", "ไอ" })]
-	[InlineData("こんにちは、AIです。", new[] { "こんにちは", "、", "AI", "です", "。" })]
+	[InlineData("Lexicographers catalog words.", new[] { "Lexicographers", " ", "catalog", " ", "words", "." })]
+	[InlineData("Les lexicographes décrivent les mots!", new[] { "Les", " ", "lexicographes", " ", "décrivent", " ", "les", " ", "mots", "!" })]
+	// ideally พจนานุกรม would be kept together, but we would need a complete Thai dictionary
+	[InlineData("พจนานุกรมไทยอธิบายคำ", new[] { "พจนานุกรม", "ไทย", "อธิบาย", "คำ" })]
+	[InlineData("辞書は語源を語る。", new[] { "辞書", "は", "語源", "を", "語る", "。" })]
 	public void Tokenize_Words_NoPunct(string input, string[] expected)
 	{
 		var seg = new IcuWordSegmenter("und", emitPunctuation: true);

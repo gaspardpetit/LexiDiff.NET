@@ -16,8 +16,8 @@ public class DiffWithTokenizerTests
 	[Fact]
 	public void Reconstructs_A_and_B_Exactly()
 	{
-		var a = "Running, quickly!";
-		var b = "Runner, quicker.";
+		var a = "Running, per the lexicon!";
+		var b = "Runner, per the lexicon.";
 
 		var diffs = DiffWithTokenizer.Diff(a, b, En);
 
@@ -41,8 +41,8 @@ public class DiffWithTokenizerTests
 	[Fact]
 	public void Replacement_Touches_Suffix_And_Preserves_Stem()
 	{
-		var a = "Running, quickly!";
-		var b = "Runner, quickly!";
+		var a = "Running, per the lexicon!";
+		var b = "Runner, per the lexicon!";
 
 		var diffs = DiffWithTokenizer.Diff(a, b, En);
 
@@ -98,8 +98,8 @@ public class DiffWithTokenizerTests
 	[Fact]
 	public void Handles_Punctuation_And_Accents_With_Reconstruction()
 	{
-		var a = "Elle a mangées.";
-		var b = "Elle a mangé.";
+		var a = "sont arrivées.";
+		var b = "sont arrivés.";
 		var diffs = DiffWithTokenizer.Diff(a, b, _ => CultureInfo.GetCultureInfo("fr-FR"));
 
 		var reconA = string.Concat(diffs.Where(d => d.Operation != Op.Insert).Select(d => d.Text));
@@ -108,7 +108,7 @@ public class DiffWithTokenizerTests
 		Assert.Equal(b, reconB);
 
 		// Expect the stem "mang" to be aligned as Equal
-		Assert.Contains(diffs, d => d.Operation == Op.Equal && d.Text.Contains("mang", StringComparison.Ordinal));
+		Assert.Contains(diffs, d => d.Operation == Op.Equal && d.Text.Contains("arriv", StringComparison.Ordinal));
 
 		// Expect one DELETE and one INSERT both consisting only of suffix subtokens
 		var del = diffs.FirstOrDefault(d => d.Operation == Op.Delete);

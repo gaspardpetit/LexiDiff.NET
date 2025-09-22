@@ -14,13 +14,23 @@ public sealed class IcuWordSegmenter : ITokenizer
     private readonly NormalizationForm? _normalizeTo;
     private readonly bool _coalescePunctWithFollowingSpace;
 
+    public CultureInfo Culture => _culture;
+
+	public IcuWordSegmenter(
+		string locale,
+		bool emitPunctuation = true,
+		bool coalescePunctWithFollowingSpace = true,
+		NormalizationForm? normalizeTo = null)
+    : this(TryGetCulture(locale) ?? CultureInfo.InvariantCulture, emitPunctuation, coalescePunctWithFollowingSpace)
+	{}
+	
     public IcuWordSegmenter(
-        string locale = "und",
+		CultureInfo? locale = null,
         bool emitPunctuation = true,
         bool coalescePunctWithFollowingSpace = true,
         NormalizationForm? normalizeTo = null)
     {
-        _culture = TryGetCulture(locale) ?? CultureInfo.InvariantCulture;
+        _culture = locale ?? CultureInfo.InvariantCulture;
         _emitPunctuation = emitPunctuation;
         _coalescePunctWithFollowingSpace = coalescePunctWithFollowingSpace;
         _normalizeTo = normalizeTo; // keep null for reversibility
