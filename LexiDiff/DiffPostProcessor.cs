@@ -51,7 +51,7 @@ public static class DiffPostProcessor
 	}
 
 	// ----- helpers -----
-
+#if false
 	private static List<(int Start, int Length)> GetSentenceRanges(string s, CultureInfo culture)
 	{
 		var bi = ICU4N.Text.BreakIterator.GetSentenceInstance(culture);
@@ -65,6 +65,68 @@ public static class DiffPostProcessor
 			ranges.Add((0, s.Length));
 		return ranges;
 	}
+#else
+	private static List<(int Start, int Length)> GetSentenceRanges(string s, CultureInfo culture)
+	{
+		// culture kept in signature for API compatibility, not used here
+		var ranges = new List<(int, int)>();
+		if (string.IsNullOrEmpty(s))
+			return ranges;
+
+		int start = 0;
+		int i = 0;
+		int len = s.Length;
+
+		while (i < len)
+		{
+			// scan until we hit a sentence ender
+			if (!IsSentenceEnder(s[i]))
+			{
+				i++;
+				continue;
+			}
+
+			// we found a terminator at i, now extend to include trailing closing punctuation
+			int end = i + 1;
+
+			// consume things like ” ) ] » after the terminator
+			while (end < len && IsTrailingCloser(s[end]))
+				end++;
+
+			// consume trailing whitespace/newlines so the container includes it
+			while (end < len && char.IsWhiteSpace(s, end))
+				end++;
+
+			// emit this sentence
+			ranges.Add((start, end - start));
+
+			// next sentence starts here
+			start = end;
+			i = end;
+		}
+
+		// trailing text without a terminator
+		if (start < len)
+			ranges.Add((start, len - start));
+
+		return ranges;
+	}
+
+	private static bool IsSentenceEnder(char c)
+	{
+		// basic western + some CJK
+		return c == '.' || c == '!' || c == '?' ||
+			   c == '…' || c == '。' || c == '！' || c == '？';
+	}
+
+	private static bool IsTrailingCloser(char c)
+	{
+		// common closers that may follow a period
+		return c == '"' || c == '\'' || c == ')' || c == ']' || c == '}' ||
+			   c == '”' || c == '’' || c == '»';
+	}
+#endif
+
 
 	private static List<(int Start, int Length)> GetParagraphRanges(string s)
 	{
