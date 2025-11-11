@@ -80,7 +80,7 @@ class Demo
 		{
 			Console.WriteLine("What if we perform Levenshtein at the word level:\n");
 
-			IcuWordSegmenter workTokenizer = new IcuWordSegmenter();
+			BasicWordSegmenter workTokenizer = new BasicWordSegmenter();
 			IReadOnlyList<Token> tok1 = workTokenizer.Tokenize(v1);
 			IReadOnlyList<Token> tok2 = workTokenizer.Tokenize(v2);
 			Console.WriteLine($"< {string.Join("|", tok1.Select(t => t.Text))}");
