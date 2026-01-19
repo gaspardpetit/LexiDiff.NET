@@ -1,32 +1,32 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>net48;net8.0;net9.0</TargetFrameworks>
-    <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
-    <ImplicitUsings Condition="'$(TargetFramework)' != 'net48'">enable</ImplicitUsings>
-    <NoWarn>$(NoWarn);CS1591;CS1587;CS1570</NoWarn>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<NoWarn>$(NoWarn);CS1591;CS1587;CS1570</NoWarn>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageId>LexiDiff</PackageId>
-    <Title>LexiDiff</Title>
-    <Description>Token-aware diff engine with Snowball stemming, ICU tokenization, and unified diff rendering.</Description>
-    <PackageTags>diff;text;tokenizer;stemming;nlp;lexidiff</PackageTags>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PackageId>LexiDiff</PackageId>
+		<Title>LexiDiff</Title>
+		<Description>Token-aware diff engine with Snowball stemming, ICU tokenization, and unified diff rendering.</Description>
+		<PackageTags>diff;text;tokenizer;stemming;nlp;lexidiff</PackageTags>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="$(MSBuildProjectDirectory)\..\dict\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <Pack>true</Pack>
-      <PackageCopyToOutput>true</PackageCopyToOutput>
-      <PackagePath>contentFiles/any/any/Dictionaries/%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
-      <Link>Dictionaries\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="$(MSBuildProjectDirectory)\..\dict\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+			<Pack>true</Pack>
+			<PackageCopyToOutput>true</PackageCopyToOutput>
+			<PackagePath>contentFiles/any/any/Dictionaries/%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+			<Link>Dictionaries\%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Snowball\Snowball.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Snowball\Snowball.csproj" />
+	</ItemGroup>
 </Project>
 
