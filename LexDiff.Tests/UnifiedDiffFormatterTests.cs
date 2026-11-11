@@ -1,101 +1,76 @@
-﻿using System.Globalization;
-using System.Text.RegularExpressions;
 using Xunit;
 
 namespace LexiDiff.Tests;
 
 public class UnifiedDiffFormatterTests
 {
-	private static readonly Func<string, CultureInfo> En
-		= _ => CultureInfo.GetCultureInfo("en-US");
+    private static string Format(string a, string b, int context = 3) =>
+        Lexi.Compare(a, b).ToUnifiedDiff("a.txt", "b.txt", context);
 
-	private static readonly Regex HunkHeader =
-		new Regex(@"^@@ -(?<la>\d+),(?<sa>\d+) \+(?<lb>\d+),(?<sb>\d+) @@$",
-				  RegexOptions.Compiled | RegexOptions.Multiline);
+    [Fact]
+    public void WordEdits_EmitCompleteLines()
+    {
+        Assert.Equal("--- a.txt\n+++ b.txt\n@@ -1,2 +1,2 @@\n" +
+            "-Running, per the lexicon!\n+Runner, per the lexicon!\n Next entry stays.\n",
+            Format("Running, per the lexicon!\nNext entry stays.\n",
+                   "Runner, per the lexicon!\nNext entry stays.\n"));
+    }
 
-	[Fact]
-	public void UnifiedDiff_Basic_OneLineChanged_ShowsMinusPlusAndContext()
-	{
-		var a = "Running, per the lexicon!\nNext entry stays.\n";
-		var b = "Runner, per the lexicon!\nNext entry stays.\n";
+    [Fact]
+    public void NearbyEdits_PreserveInterveningContext()
+    {
+        Assert.Equal("--- a.txt\n+++ b.txt\n@@ -1,3 +1,3 @@\n" +
+            "-old\n+new\n lexicon\n-last\n+end\n",
+            Format("old\nlexicon\nlast\n", "new\nlexicon\nend\n", 1));
+    }
 
-		var patch = LexiDiffer.Patch(a, b, new LexiDiffOptions {
-			DetectLang = En,
-			PromoteTo = Granularity.Tokens
-		});
+    [Fact]
+    public void DistantEdits_ProduceSeparateHunks()
+    {
+        Assert.Equal("--- a.txt\n+++ b.txt\n@@ -1,2 +1,2 @@\n-old\n+new\n one\n" +
+            "@@ -5,2 +5,2 @@\n four\n-last\n+end\n",
+            Format("old\none\ntwo\nthree\nfour\nlast\n",
+                   "new\none\ntwo\nthree\nfour\nend\n", 1));
+    }
 
-		var udiff = LexPatchFormatter.ToUnifiedDiff(a, b, patch, aLabel: "a.txt", bLabel: "b.txt", contextLines: 3);
+    [Fact]
+    public void ZeroContext_OnlyIncludesChanges()
+    {
+        Assert.Equal("--- a.txt\n+++ b.txt\n@@ -1,1 +1,1 @@\n-old\n+new\n",
+            Format("old\nlexicon\n", "new\nlexicon\n", 0));
+    }
 
-		// Headers present
-		Assert.Contains("--- a.txt\n", udiff);
-		Assert.Contains("+++ b.txt\n", udiff);
+    [Theory]
+    [InlineData("", "lemma\n", "@@ -0,0 +1,1 @@\n+lemma\n")]
+    [InlineData("lemma\n", "", "@@ -1,1 +0,0 @@\n-lemma\n")]
+    [InlineData("alpha\n", "alpha\nbeta\n", "@@ -1,0 +2,1 @@\n+beta\n")]
+    [InlineData("alpha\nbeta\n", "alpha\n", "@@ -2,1 +1,0 @@\n-beta\n")]
+    public void InsertionsAndDeletions_UseZeroLengthRanges(string a, string b, string hunk)
+    {
+        Assert.Equal("--- a.txt\n+++ b.txt\n" + hunk, Format(a, b, 0));
+    }
 
-		// Hunk header present and sane
-		var m = HunkHeader.Match(udiff);
-		Assert.True(m.Success, "Missing unified hunk header.");
-		int sa = int.Parse(m.Groups["sa"].Value);
-		int sb = int.Parse(m.Groups["sb"].Value);
-		Assert.Equal(sa, sb);
-		Assert.True(sa >= 2); // changed line + at least one context
+    [Fact]
+    public void MissingFinalNewline_IsRepresentedExplicitly()
+    {
+        Assert.Equal("--- a.txt\n+++ b.txt\n@@ -1,1 +1,1 @@\n" +
+            "-lemma\n\\ No newline at end of file\n+lemma\n",
+            Format("lemma", "lemma\n"));
+    }
 
-		// We expect minus/plus lines for the changed lemma plus a context line carrying the punctuation
-		Assert.Contains("\n-Running\n", udiff);
-		Assert.Contains("\n+Runner\n", udiff);
-		Assert.Contains("\n , per the lexicon!\n", udiff);
+    [Fact]
+    public void BlankLinesAndCrLf_ArePreserved()
+    {
+        Assert.Equal("--- a.txt\n+++ b.txt\n@@ -1,3 +1,4 @@\n" +
+            " Alpha\r\n+Beta\r\n \r\n Gamma\r\n",
+            Format("Alpha\r\n\r\nGamma\r\n", "Alpha\r\nBeta\r\n\r\nGamma\r\n"));
+    }
 
-		// Context second line should be present
-		Assert.Contains("\n Next entry stays.\n", udiff);
-
-		// No CRs (we force \n)
-		Assert.DoesNotContain("\r", udiff);
-	}
-
-	[Fact]
-	public void UnifiedDiff_InsertLine_And_BlankLineContext()
-	{
-		var a = "Alpha\n\nGamma\n";
-		var b = "Alpha\nBeta\n\nGamma\n";
-
-		var patch = LexiDiffer.Patch(a, b, new LexiDiffOptions {
-			DetectLang = En,
-			PromoteTo = Granularity.Tokens
-		});
-
-		var udiff = LexPatchFormatter.ToUnifiedDiff(a, b, patch, aLabel: "a.txt", bLabel: "b.txt", contextLines: 1);
-
-		// Headers present
-		Assert.Contains("--- a.txt\n", udiff);
-		Assert.Contains("+++ b.txt\n", udiff);
-
-		// Hunk header present
-		var m = HunkHeader.Match(udiff);
-		Assert.True(m.Success, "Missing unified hunk header.");
-
-		// We should see context "Alpha", inserted "Beta", and a blank context line
-		Assert.Contains("\n Alpha\n", udiff);
-		Assert.Contains("\n+Beta\n", udiff);
-		Assert.Contains("\n \n", udiff); // blank line context
-
-		// No deletions for Alpha or Gamma in this pure insertion case
-		Assert.DoesNotContain("\n-Alpha\n", udiff);
-		Assert.DoesNotContain("\n-Gamma\n", udiff);
-	}
-
-	[Fact]
-	public void UnifiedDiff_IsLineLevel_NotWordInline()
-	{
-		var a = "Running, per the lexicon!\n";
-		var b = "Runner, per the lexicon!\n";
-
-		var patch = LexiDiffer.Patch(a, b, new LexiDiffOptions { DetectLang = En });
-		var udiff = LexPatchFormatter.ToUnifiedDiff(a, b, patch);
-
-		// The unified output shows whole changed lines, not inline word markers
-		Assert.Contains("\n-Running\n", udiff);
-		Assert.Contains("\n+Runner\n", udiff);
-
-		// No inline tokens like “[Stem]” etc.
-		Assert.DoesNotContain("[", udiff);
-		Assert.DoesNotContain("]", udiff);
-	}
+    [Fact]
+    public void MismatchedTarget_IsRejected()
+    {
+        var patch = LexiDiffer.Patch("lemma", "lexeme");
+        Assert.Throws<InvalidOperationException>(() =>
+            LexPatchFormatter.ToUnifiedDiff("lemma", "unrelated", patch));
+    }
 }

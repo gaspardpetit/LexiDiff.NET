@@ -25,6 +25,10 @@ public static class DiffWithTokenizer
 
 	// Overload: bring your own tokenizer (string -> IReadOnlyList<Token>)
 	public static List<DiffSpan> Diff(string a, string b, Func<string, IReadOnlyList<Token>> tokenizer)
+		=> Diff(a, b, tokenizer, cleanupSemantic: true);
+
+	internal static List<DiffSpan> Diff(string a, string b,
+		Func<string, IReadOnlyList<Token>> tokenizer, bool cleanupSemantic)
 	{
 		if (a is null)
 			throw new ArgumentNullException(nameof(a));
@@ -45,7 +49,8 @@ public static class DiffWithTokenizer
 		};
 
 		var diffs = dmp.diff_main(charsA, charsB);
-		dmp.diff_cleanupSemantic(diffs);
+		if (cleanupSemantic)
+			dmp.diff_cleanupSemantic(diffs);
 
 		return MapBack(diffs, toksA, toksB);
 	}
