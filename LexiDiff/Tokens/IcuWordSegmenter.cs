@@ -44,7 +44,7 @@ namespace LexiDiff.Tokens
 			int start = 0;
 			int currentBucket = GetBucket(text, 0);
 
-			for (int i = 1; i < text.Length; i++)
+			for (int i = ScalarLength(text, 0); i < text.Length; i += ScalarLength(text, i))
 			{
 				int b = GetBucket(text, i);
 				if (b != currentBucket)
@@ -112,6 +112,10 @@ namespace LexiDiff.Tokens
 		/// Coarse, fast bucket to decide where to cut spans.
 		/// We keep it close to the later classifier, so the final class rarely disagrees.
 		/// </summary>
+		private static int ScalarLength(string text, int index)
+			=> char.IsHighSurrogate(text[index]) && index + 1 < text.Length &&
+			   char.IsLowSurrogate(text[index + 1]) ? 2 : 1;
+
 		private static int GetBucket(string s, int index)
 		{
 			var uc = char.GetUnicodeCategory(s, index);
@@ -169,7 +173,7 @@ namespace LexiDiff.Tokens
 			bool hasLetter = false, hasMark = false, hasNumber = false;
 			bool hasPunct = false, hasSymbol = false, hasSpace = false;
 
-			for (int i = 0; i < span.Length; i++)
+			for (int i = 0; i < span.Length; i += ScalarLength(span, i))
 			{
 				var uc = char.GetUnicodeCategory(span, i);
 				switch (uc)
