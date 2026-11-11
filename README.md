@@ -6,9 +6,12 @@
 
 Token-aware text diffs with an objective to favour readability over compactness.
 
-| Pure Leveinstein | LexiDiff |
+Deletions are shown with strikethrough; additions are shown in bold.
+
+| Pure Levenshtein | LexiDiff |
 |------------------|----------|
-| Alice was <del>beginning to get</del><ins>getting</ins> very tired <ins>t</ins>o<del>f</del> sit<del>ting</del> by her sister on the bank, <del>and of having</del><ins>with</ins> nothing to do. | Alice was <del>beginning to </del>get<ins>ting</ins> very tired <del>of</del><ins>to</ins> sit<del>ting</del> by her sister on the bank, <del>and of having</del><ins>with</ins> nothing to do. |
+| Alice was ~~beginning to get~~**getting** very tired **t**o~~f~~ sit~~ting~~ by her sister on the bank, ~~and of having~~**with** nothing to do. | Alice was ~~beginning to~~ get**ting** very tired ~~of~~**to** sit~~ting~~ by her sister on the bank, ~~and of having~~**with** nothing to do. |
+
 --------
 
 Produce readable diffs that **never split randomly inside words**, optionally **promote** changes to **sentence** or **paragraph** granularity, and render as **unified diff** or **inline HTML**.
@@ -49,11 +52,12 @@ foreach (var span in result.Spans) {
 
 The `LexiDiffResult` result contains a list of operation (delete, insert, equal) which, when applied onto the original string, generates the second:
 
-> Alice was <del>beginning to </del>get<ins>ting</ins> very tired <del>of</del><ins>to</ins> sit<del>ting</del> by her sister on the bank, <del>and of having</del><ins>with</ins> nothing to do.
+> Alice was ~~beginning to~~ get**ting** very tired ~~of~~**to** sit~~ting~~ by her sister on the bank, ~~and of having~~**with** nothing to do.
 
 Notice that we perform word and stemming aware diff: 
-- get<u>ting</u> is allowed (stemming aware) but
-- <u>to</u>[f] would have been preferred by Levenshtein distance, but is not allowed here and transformed as ~~of~~ <u>to</u> instead
+
+- get**ting** is allowed (stemming aware) but
+- **t**o~~f~~ would have been preferred by Levenshtein distance, but is not allowed here and transformed as ~~of~~**to** instead
 
 ---
 
