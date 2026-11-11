@@ -38,7 +38,7 @@ for path in packages.glob("*.nupkg"):
         require(len(groups) == 1 and groups[0].get("targetFramework") == ".NETStandard2.0",
                 f"Unexpected dependency frameworks: {path}")
         deps = {dep.get("id"): dep.get("version") for dep in groups[0]}
-        wanted = {"LexiDiff.Snowball": version} if package_id == "LexiDiff" else {}
+        wanted = {"LexiDiff.Snowball": version, "ICU4N": "60.1.0-alpha.440"} if package_id == "LexiDiff" else {}
         require(deps == wanted, f"Unexpected dependencies in {path}: {deps}")
         print(f"Verified {package_id} {version}: netstandard2.0 assets and dependencies")
 

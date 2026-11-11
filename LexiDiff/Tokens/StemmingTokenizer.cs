@@ -69,6 +69,6 @@ public class StemmingTokenizer : ITokenizer
     protected virtual ITokenizer CreateSegmenter(CultureInfo culture)
     {
         culture ??= CultureInfo.InvariantCulture;
-        return new BasicWordSegmenter(culture, emitPunctuation: true, normalizeTo: null);
+        return new IcuWordSegmenter(culture, emitPunctuation: true, normalizeTo: null);
     }
 }

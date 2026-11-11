@@ -25,7 +25,7 @@ public class StemmingTokenizerLocaleTests
         }
     }
 
-	[Fact(Skip = "Disabled in VSTO: ICU4N word segmentation for Thai not available here.")]
+	[Fact]
     public void Tokenize_RespectsDetectedThaiCulture()
     {
 		// This test makes sure that we use ICU4N with correct culture, since Thai has special handling of word.
@@ -36,7 +36,8 @@ public class StemmingTokenizerLocaleTests
         var tokens = tokenizer.Tokenize(text);
 
         Assert.Contains(tokenizer.SeenCultures, c => c.Name == thaiCulture.Name);
-        //Assert.Contains(tokenizer.Segmenters, seg => seg.Culture.Name == thaiCulture.Name);
+        Assert.All(tokenizer.Segmenters, seg =>
+            Assert.Equal(thaiCulture.Name, Assert.IsType<IcuWordSegmenter>(seg).Culture.Name));
 
         var wordTokens = tokens.Where(t => t.Kind == WordKind.Word).Select(t => t.Text).ToArray();
         var expected = new[]
