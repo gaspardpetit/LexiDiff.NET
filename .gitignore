@@ -1,3 +1,5 @@
 ﻿.vs
 **/bin/**
 **/obj/**
+artifacts/packages/
+artifacts/package-validation/

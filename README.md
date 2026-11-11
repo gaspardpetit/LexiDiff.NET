@@ -22,7 +22,7 @@ Produce readable diffs that **never split randomly inside words**, optionally **
 
 ## Install
 
-> **Requirements:** .NET 4.8+ / .NET 8 / .NET 9
+> **Compatibility:** Targets .NET Standard 2.0; consumable by .NET Framework 4.8 and .NET 8, 9, and 10.
 
     dotnet add package LexiDiff
 

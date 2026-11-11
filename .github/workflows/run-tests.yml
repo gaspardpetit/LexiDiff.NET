@@ -29,10 +29,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            9.0.x
-            8.0.x
-          include-prerelease: true
+          # Tests and sample run on .NET 9; libraries target .NET Standard 2.0.
+          dotnet-version: 9.0.x
 
       - name: Restore
         run: dotnet restore LexiDiff.sln
@@ -42,3 +40,9 @@ jobs:
 
       - name: Test
         run: dotnet test LexiDiff.sln --configuration Release --no-build --logger "trx;LogFileName=tests.trx"
+
+      - name: Pack
+        run: dotnet pack LexiDiff.sln --configuration Release --no-build --no-restore --output artifacts/package-validation
+
+      - name: Verify NuGet packages
+        run: python3 .github/scripts/verify-packages.py artifacts/package-validation
