@@ -34,23 +34,16 @@ Produce readable diffs that **never split randomly inside words**, optionally **
 ## Quick Start
 
 ```cs
-using System.Globalization;
 using LexiDiff;
 
 LexiDiffResult result = Lexi.Compare(
     "Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do.",
     "Alice was getting very tired to sit by her sister on the bank, with nothing to do.");
 
-foreach (var span in result.Spans) {
-    switch (span.Op) {
-        case LexiOp.Insert: Console.Write($"<ins>{span.Text}</ins>"); break;
-        case LexiOp.Equal:  Console.Write(span.Text);                 break;
-        case LexiOp.Delete: Console.Write($"<del>{span.Text}</del>"); break;
-    }
-}
+Console.WriteLine(result.ToInlineHtml());
 ```
 
-The `LexiDiffResult` result contains a list of operation (delete, insert, equal) which, when applied onto the original string, generates the second:
+The `LexiDiffResult` contains delete, insert, and equal spans. `ApplyTo(original)` reconstructs the modified text; `ToInlineHtml()` HTML-encodes the text and highlights the changes:
 
 > Alice was ~~beginning to~~ get**ting** very tired ~~of~~**to** sit~~ting~~ by her sister on the bank, ~~and of having~~**with** nothing to do.
 
@@ -66,21 +59,29 @@ Notice that we perform word and stemming aware diff:
 You can “promote” any in-sentence edits to a **whole-sentence** replacement (or paragraph-level), which is often what reviewers want to see.
 
 ```cs
+using System.Globalization;
+using LexiDiff;
+
+var a = "A sentence. Next entry stays.";
+var b = "A new sentence. Next entry stays.";
+
 // Sentence-level promotion (locale-aware via ICU)
 var sentenceDiff = Lexi.Compare(
     a, b,
-    new LexiDiff.LexiOptions {
-        PromoteTo = LexiDiff.LexGranularity.Sentence,
+    new LexiOptions {
+        PromoteTo = LexGranularity.Sentence,
         SentenceCulture = CultureInfo.GetCultureInfo("en-US")
     });
 
 Console.WriteLine(sentenceDiff.ToUnifiedDiff("a.txt", "b.txt"));
 
 // Paragraph-level promotion
-var paraDiff = LexiDiff.LexDiff.CompareParagraphs(a, b);
+var paraDiff = Lexi.CompareParagraphs(a, b);
 ```
 
 > Sentence boundaries use ICU’s Unicode Text Segmentation (UAX #29) with locale tailoring. Paragraphs split on newlines (blank line is its own paragraph).
+
+Language selection defaults to English. Supply `LexiOptions.DetectLang` to select the culture used for word segmentation and stemming; the library does not detect languages automatically. Set `SentenceCulture` separately for sentence boundaries.
 
 ---
 
@@ -89,7 +90,7 @@ var paraDiff = LexiDiff.LexDiff.CompareParagraphs(a, b);
 Traditional diffs split anywhere in the character stream. LexiDiff:
 
 - **Segments words with ICU**, so punctuation/whitespace tokens are preserved.
-- **Stems with Snowball**, so variants like *Running → Runner* align on **Run**.
+- **Stems with Snowball**, so a word such as *cats* can split into **cat** + **s**.
 - **Diffs on tokens**, so we **never split inside a stem/suffix**.
 - Guarantees **perfect reconstruction**: for every token, either a `Whole` token or `(Stem + Suffix)` where `stem + suffix == original`.
 
@@ -101,10 +102,10 @@ This makes deltas cleaner and more meaningful for reviewers.
 
 - **Unified diff is line-level.** Inline word/suffix highlighting is available via `ToInlineHtml`, not in unified output.
 - Snowball’s stemming is heuristic; some languages/words may not split (by design). We preserve the original text regardless.
-- Sentence boundaries in may need RBBI tailoring; a light post-filter for abbreviations (`Me.`, `Dr.`, `art.`) is easy to add if needed.
+- Sentence boundaries around abbreviations (`Me.`, `Dr.`, `art.`) may require additional tailoring for specialized text.
 
 ---
 
 ## License
 
-MIT (project code). Snowball stemmers are BSD-style; ICU4N follows ICU/Unicode licenses. Review their licenses if redistributing.
+Project code is licensed under [Apache-2.0](https://github.com/gaspardpetit/LexiDiff.NET/blob/main/LICENSE), matching the NuGet package metadata. Snowball is distributed under [BSD-3-Clause](https://github.com/snowballstem/snowball/blob/v3.2.0/COPYING). ICU4N includes its own [license and third-party notices](https://github.com/NightOwl888/ICU4N/blob/main/LICENSE.txt).
