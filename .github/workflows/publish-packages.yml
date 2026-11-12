@@ -17,6 +17,9 @@ env:
 jobs:
   pack-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -67,12 +70,18 @@ jobs:
       - name: Verify NuGet packages
         run: python3 .github/scripts/verify-packages.py
 
+      - name: Authenticate to NuGet with Trusted Publishing
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: gaspardpetit
+
       - name: Push packages to NuGet
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
         run: |
           if [ -z "$NUGET_API_KEY" ]; then
-            echo 'NUGET_API_KEY secret is not set.' >&2
+            echo 'NuGet login did not return a temporary API key.' >&2
             exit 1
           fi
           dotnet nuget push artifacts/packages/*.nupkg --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --skip-duplicate
