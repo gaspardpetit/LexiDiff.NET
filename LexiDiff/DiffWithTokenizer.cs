@@ -41,7 +41,10 @@ public static class DiffWithTokenizer
 		IReadOnlyList<Token> toksB = tokenizer(b);
 
 		// ? pooling-by-text returns (charsA, charsB)
-		(string charsA, string charsB) = TokensToChars(toksA, toksB);
+		var encoded = TokensToChars(toksA, toksB);
+		if (encoded is null)
+			return MapBack(TokenSequenceDiffer.Diff(toksA, toksB), toksA, toksB);
+		var (charsA, charsB) = encoded.Value;
 
 		diff_match_patch dmp = new diff_match_patch {
 			Match_Threshold = 0.4f,
@@ -55,7 +58,7 @@ public static class DiffWithTokenizer
 		return MapBack(diffs, toksA, toksB);
 	}
 
-	private static (string a, string b) TokensToChars(
+	private static (string a, string b)? TokensToChars(
 		IReadOnlyList<Token> toksA,
 		IReadOnlyList<Token> toksB)
 	{
@@ -63,6 +66,7 @@ public static class DiffWithTokenizer
 		const int PuaStart = 0xE000, PuaEnd = 0xF8FF;
 		var pool = new Dictionary<string, char>(StringComparer.Ordinal);
 		int next = PuaStart;
+		bool exhausted = false;
 
 		string Encode(IReadOnlyList<Token> toks)
 		{
@@ -72,7 +76,7 @@ public static class DiffWithTokenizer
 				if (!pool.TryGetValue(t.Text, out var ch))
 				{
 					if (next > PuaEnd)
-						throw new NotSupportedException("Exceeded PUA capacity; consider chunking or a wider encoding.");
+						{ exhausted = true; return string.Empty; }
 					ch = (char)next++;
 					pool[t.Text] = ch;
 				}
@@ -81,7 +85,10 @@ public static class DiffWithTokenizer
 			return sb.ToString();
 		}
 
-		return (Encode(toksA), Encode(toksB));
+		var a = Encode(toksA);
+		if (exhausted) return null;
+		var b = Encode(toksB);
+		return exhausted ? null : (a, b);
 	}
 
 	private static List<DiffSpan> MapBack(
