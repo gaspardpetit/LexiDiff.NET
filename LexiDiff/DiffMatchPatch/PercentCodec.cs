@@ -18,6 +18,9 @@ public static class PercentCodec
 
 		var utf8 = Encoding.UTF8;
 		var sb = new StringBuilder(s.Length + 16);
+		var scalar = new char[2];
+		var bytes = new byte[utf8.GetMaxByteCount(scalar.Length)];
+		const string hex = "0123456789ABCDEF";
 
 		for (int i = 0; i < s.Length;)
 		{
@@ -37,9 +40,12 @@ public static class PercentCodec
 				len = 2;
 
 			// Encode this scalar (or BMP char that isn't allowed) as UTF-8 bytes
-			var bytes = utf8.GetBytes(s.ToCharArray(), i, len);
-			for (int b = 0; b < bytes.Length; b++)
-				sb.Append('%').Append(bytes[b].ToString("X2"));
+			scalar[0] = c;
+			if (len == 2)
+				scalar[1] = s[i + 1];
+			int byteCount = utf8.GetBytes(scalar, 0, len, bytes, 0);
+			for (int b = 0; b < byteCount; b++)
+				sb.Append('%').Append(hex[bytes[b] >> 4]).Append(hex[bytes[b] & 15]);
 
 			i += len;
 		}
