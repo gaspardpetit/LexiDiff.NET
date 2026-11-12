@@ -1,10 +1,9 @@
 [![Build & Tests](https://github.com/gaspardpetit/LexiDiff.NET/actions/workflows/run-tests.yml/badge.svg)](https://github.com/gaspardpetit/LexiDiff.NET/actions/workflows/run-tests.yml)
 [![NuGet](https://img.shields.io/nuget/v/LexiDiff.svg)](https://www.nuget.org/packages/LexiDiff)
 
-
 # LexiDiff
 
-Token-aware text diffs with an objective to favour readability over compactness.
+Token-aware text diffs that favour readability over compactness.
 
 Deletions are shown with strikethrough; additions are shown in bold.
 
@@ -14,12 +13,12 @@ Deletions are shown with strikethrough; additions are shown in bold.
 
 --------
 
-Produce readable diffs that **never split randomly inside words**, optionally **promote** changes to **sentence** or **paragraph** granularity, and render as **unified diff** or **inline HTML**.
+LexiDiff compares words and their stems, with optional sentence or paragraph granularity.
 
-- ICU word segmentation + Snowball stemming (multi-language)
-- Token-aware diff (Diff Match Patch), **no mid-token splits**
-- Optional promotion to **Sentence** or **Paragraph**
-- Output as **Delete-Add-Replace** sequences,  **Unified Diff** (line-level hunks) or **Inline HTML**
+- Language-aware word segmentation with ICU4N and stemming with Snowball
+- Edits aligned to whole words, stems, and suffixes
+- Sentence and paragraph comparison
+- Equal, insert, and delete spans, with unified diff and inline HTML output
 
 ---
 
@@ -34,77 +33,77 @@ Produce readable diffs that **never split randomly inside words**, optionally **
 ## Quick Start
 
 ```cs
-using System.Globalization;
 using LexiDiff;
 
 LexiDiffResult result = Lexi.Compare(
     "Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do.",
     "Alice was getting very tired to sit by her sister on the bank, with nothing to do.");
 
-foreach (var span in result.Spans) {
-    switch (span.Op) {
-        case LexiOp.Insert: Console.Write($"<ins>{span.Text}</ins>"); break;
-        case LexiOp.Equal:  Console.Write(span.Text);                 break;
-        case LexiOp.Delete: Console.Write($"<del>{span.Text}</del>"); break;
-    }
-}
+Console.WriteLine(result.ToInlineHtml());
 ```
 
-The `LexiDiffResult` result contains a list of operation (delete, insert, equal) which, when applied onto the original string, generates the second:
+`LexiDiffResult.Spans` contains equal, insert, and delete spans. `ApplyTo(original)` applies the changes to the original text. `ToInlineHtml()` HTML-encodes the text and wraps changes in `<del>` and `<ins>` tags.
+
+The example highlights these changes:
 
 > Alice was ~~beginning to~~ get**ting** very tired ~~of~~**to** sit~~ting~~ by her sister on the bank, ~~and of having~~**with** nothing to do.
 
-Notice that we perform word and stemming aware diff: 
-
-- get**ting** is allowed (stemming aware) but
-- **t**o~~f~~ would have been preferred by Levenshtein distance, but is not allowed here and transformed as ~~of~~**to** instead
+The shared stem in get**ting** stays unchanged. Replacing *of* with *to* produces ~~of~~**to**, keeping both words intact.
 
 ---
 
 ## Granularity Promotion (Sentence / Paragraph)
 
-You can “promote” any in-sentence edits to a **whole-sentence** replacement (or paragraph-level), which is often what reviewers want to see.
+Use sentence or paragraph granularity to show each changed sentence or paragraph as a whole replacement.
 
 ```cs
-// Sentence-level promotion (locale-aware via ICU)
+using System.Globalization;
+using LexiDiff;
+
+var a = "A sentence. Next entry stays.";
+var b = "A new sentence. Next entry stays.";
+
+// Compare whole sentences using English sentence boundaries
 var sentenceDiff = Lexi.Compare(
     a, b,
-    new LexiDiff.LexiOptions {
-        PromoteTo = LexiDiff.LexGranularity.Sentence,
+    new LexiOptions {
+        PromoteTo = LexGranularity.Sentence,
         SentenceCulture = CultureInfo.GetCultureInfo("en-US")
     });
 
 Console.WriteLine(sentenceDiff.ToUnifiedDiff("a.txt", "b.txt"));
 
 // Paragraph-level promotion
-var paraDiff = LexiDiff.LexDiff.CompareParagraphs(a, b);
+var paraDiff = Lexi.CompareParagraphs(a, b);
 ```
 
-> Sentence boundaries use ICU’s Unicode Text Segmentation (UAX #29) with locale tailoring. Paragraphs split on newlines (blank line is its own paragraph).
+Sentence boundaries use ICU4N with the specified culture. Paragraphs split at each newline; a blank line forms a separate paragraph.
+
+Word segmentation and stemming default to English (`en-US`). To use another language, supply a culture-selection callback through `LexiOptions.DetectLang`. Set `SentenceCulture` for sentence boundaries; it defaults to the invariant culture.
 
 ---
 
 ## Why token-aware?
 
-Traditional diffs split anywhere in the character stream. LexiDiff:
+LexiDiff uses ICU4N to identify words and Snowball to find stems. A word such as *cats* can split into **cat** + **s**, allowing suffix changes to appear independently. Edits preserve these token boundaries.
 
-- **Segments words with ICU**, so punctuation/whitespace tokens are preserved.
-- **Stems with Snowball**, so variants like *Running → Runner* align on **Run**.
-- **Diffs on tokens**, so we **never split inside a stem/suffix**.
-- Guarantees **perfect reconstruction**: for every token, either a `Whole` token or `(Stem + Suffix)` where `stem + suffix == original`.
-
-This makes deltas cleaner and more meaningful for reviewers.
+Original spelling, punctuation, and whitespace are preserved. Use `ReconstructA()` and `ReconstructB()` to recover the input texts.
 
 ---
 
 ## Known Limitations
 
-- **Unified diff is line-level.** Inline word/suffix highlighting is available via `ToInlineHtml`, not in unified output.
-- Snowball’s stemming is heuristic; some languages/words may not split (by design). We preserve the original text regardless.
-- Sentence boundaries in may need RBBI tailoring; a light post-filter for abbreviations (`Me.`, `Dr.`, `art.`) is easy to add if needed.
+- Unified diffs show changes by line. Use `ToInlineHtml()` for word and suffix highlighting.
+- Snowball’s stemming is heuristic. Words without a usable stem split remain whole.
+- Sentence boundaries around abbreviations (`Me.`, `Dr.`, `art.`) may require additional tailoring for specialized text.
 
 ---
 
 ## License
 
-MIT (project code). Snowball stemmers are BSD-style; ICU4N follows ICU/Unicode licenses. Review their licenses if redistributing.
+LexiDiff is licensed under [Apache-2.0](https://github.com/gaspardpetit/LexiDiff.NET/blob/main/LICENSE).
+
+Dependency licenses:
+
+- Snowball: [BSD-3-Clause](https://github.com/snowballstem/snowball/blob/v3.2.0/COPYING)
+- ICU4N: [license and third-party notices](https://github.com/NightOwl888/ICU4N/blob/main/LICENSE.txt)
